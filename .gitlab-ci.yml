@@ -13,12 +13,6 @@ sonarcloud-check:
       - node_modules
   script:
     - sonar-scanner
-      -Dsonar.projectKey=artitask-front
-      -Dsonar.sources=src
-      -Dsonar.tests=src
-      -Dsonar.test.inclusions=**/*.spec.ts
-      -Dsonar.typescript.lcov.reportPaths=coverage/artitask/lcov.info
-      -Dsonar.javascript.lcov.reportPaths=coverage/artitask/lcov.info
   only:
     - merge_requests
     - main
