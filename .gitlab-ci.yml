@@ -4,13 +4,16 @@ variables:
   CHROME_BIN: "/usr/bin/google-chrome"
 
 sonarcloud-check:
-  image: circleci/node:latest-browsers
+  image: node:18.19-bullseye
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
       - node_modules
   before_script:
+    - apt-get update
+    - apt-get install -y chromium chromium-driver
+    - export CHROME_BIN=/usr/bin/chromium
     - npm install
     - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
   script:
