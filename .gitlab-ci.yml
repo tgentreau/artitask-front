@@ -11,7 +11,7 @@ sonarcloud-check:
       - .sonar/cache
   script:
     - sonar-scanner
-      -Dsonar.projectKey=artitask-front
+      -Dsonar.projectKey=tgentreau_artitask-front
       -Dsonar.organization=tgentreau
       -Dsonar.sources=src
       -Dsonar.host.url=${SONAR_HOST_URL}
