@@ -13,6 +13,7 @@ sonarcloud-check:
   before_script:
     - apt-get update
     - apt-get install -y chromium chromium-driver
+    - npm install -g sonar-scanner
     - export CHROME_BIN=/usr/bin/chromium
     - npm install
     - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
