@@ -3,7 +3,7 @@ variables:
   GIT_DEPTH: "0"
 
 sonarcloud-check:
-  image: sonarsource/sonar-scanner-cli:latest
+  image: markhobson/node-chrome:latest
   cache:
     key: "${CI_JOB_NAME}"
     paths:
