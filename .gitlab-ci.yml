@@ -10,12 +10,13 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
-    - sonar-scanner
+    - sonar-scanner -X
       -Dsonar.projectKey=tgentreau_artitask-front
       -Dsonar.organization=tgentreau
       -Dsonar.sources=src
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.token=${SONAR_TOKEN}
+      -Dsonar.typescript.tslint.reportPaths=""
   only:
     - merge_requests
     - main
