@@ -3,7 +3,7 @@ variables:
   GIT_DEPTH: "0"
 
 sonarcloud-check:
-  image: markhobson/node-chrome:latest
+  image: cimg/node:18.17-browsers
   cache:
     key: "${CI_JOB_NAME}"
     paths:

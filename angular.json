@@ -79,6 +79,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
+            "karmaConfig": "karma.conf.js",
             "assets": [
               "src/favicon.ico",
               "src/assets"
@@ -86,7 +87,18 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "browsers": "ChromeHeadlessCI",
+            "codeCoverage": true,
+            "watch": false
+          },
+          "configurations": {
+            "ci": {
+              "browsers": "ChromeHeadlessCI",
+              "watch": false,
+              "progress": false,
+              "codeCoverage": true
+            }
           }
         }
       }
