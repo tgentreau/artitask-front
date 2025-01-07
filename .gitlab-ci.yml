@@ -10,6 +10,8 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
+    - npm install
+    - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
     - sonar-scanner -X
       -Dsonar.projectKey=tgentreau_artitask-front
       -Dsonar.organization=tgentreau
