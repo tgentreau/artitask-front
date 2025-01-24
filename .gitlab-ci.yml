@@ -1,7 +1,25 @@
 variables:
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
   GIT_DEPTH: "0"
+
+stages:
+  - test
+  - sonar
+
+test-coverage:
+  stage: test
+  image: cimg/node:18.19-browsers
+  script:
+    - npm install
+    - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 day
+
 sonarcloud-check:
+  stage: sonar
+  needs: ["test-coverage"]
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
@@ -10,11 +28,10 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
-    - npm install
-    - npm run test --code-coverage
     - sonar-scanner
       -Dsonar.projectKey=tgentreau_artitask-front
       -Dsonar.organization=tgentreau
+      -Dsonar.sources=src
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.token=${SONAR_TOKEN}
   only:
