@@ -13,7 +13,7 @@ sonarcloud-check:
     - npm install
     - npm run test --code-coverage
     - sonar-scanner
-      -Dsonar.projectKey=tgentreau_artitask-back
+      -Dsonar.projectKey=tgentreau_artitask-front
       -Dsonar.organization=tgentreau
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.token=${SONAR_TOKEN}
