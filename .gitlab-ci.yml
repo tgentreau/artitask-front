@@ -8,10 +8,13 @@ stages:
 
 test-coverage:
   stage: test
-  image: cimg/node:18.19-browsers
+  image: truemail/puppeteer
   script:
-    - which google-chrome-stable
-    - ls -la /usr/bin/google-chrome*
+    - npm install
+    - npm run test -- --no-watch --browsers=ChromeHeadless --code-coverage
+  artifacts:
+    paths:
+      - coverage/
 
 sonarcloud-check:
   stage: sonar
