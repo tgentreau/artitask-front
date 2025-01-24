@@ -8,7 +8,7 @@ stages:
 
 test-coverage:
   stage: test
-  image: puppeteer/puppeteer:latest
+  image: mcr.microsoft.com/playwright:focal
   script:
     - npm install
     - npm run test -- --no-watch --browsers=ChromeHeadless --code-coverage
