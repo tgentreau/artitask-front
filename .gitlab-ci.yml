@@ -10,7 +10,8 @@ test-coverage:
   stage: test
   image: cimg/node:18.19-browsers
   script:
-    - find / -name "chrome" -o -name "google-chrome" 2>/dev/null
+    - which google-chrome-stable
+    - ls -la /usr/bin/google-chrome*
 
 sonarcloud-check:
   stage: sonar
