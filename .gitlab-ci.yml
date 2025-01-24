@@ -12,7 +12,7 @@ test:
   image: cimg/node:18.19-browsers
   script:
     - npm install
-    - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
+    - npm run test -- --no-watch --browsers ChromeHeadlessCI
   artifacts:
     paths:
       - coverage/
