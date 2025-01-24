@@ -9,7 +9,10 @@ stages:
 test-coverage:
   stage: test
   image: cimg/node:18.19-browsers
+  variables:
+    CHROME_BIN: "/usr/bin/google-chrome"
   script:
+    - google-chrome --version
     - npm install
     - npm run test -- --no-watch --browsers ChromeHeadlessCI --code-coverage
   artifacts:
