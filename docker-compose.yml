@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  frontend-dev:
+    build: .
+    ports: ['4200:4200']
+    environment:
+      - NODE_ENV=development
+      - API_URL=http://localhost:3000
+
+  frontend-test:
+    build:
+      context: .
+      target: test
+    ports: ['4201:4200']
+
+  frontend-prod:
+    build:
+      context: .
+      target: production
+    ports: ['80:80']
