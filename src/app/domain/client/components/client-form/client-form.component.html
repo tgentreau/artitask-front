@@ -1,0 +1,129 @@
+<div class="p-4 md:p-6 max-w-2xl mx-auto">
+  <div class="mb-6">
+    <button
+      (click)="goBack()"
+      class="flex items-center text-gray-600 hover:text-gray-900 mb-4">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+      Retour
+    </button>
+    <h1 class="text-2xl font-bold text-gray-900">
+      {{ isEditMode ? 'Modifier le client' : 'Nouveau client' }}
+    </h1>
+  </div>
+
+  <form [formGroup]="clientForm" (ngSubmit)="onSubmit()" class="bg-white shadow-md rounded-lg p-6">
+
+    <div class="mb-4">
+      <label for="nom" class="block text-sm font-medium text-gray-700 mb-2">
+        Nom complet *
+      </label>
+      <input
+        id="nom"
+        type="text"
+        formControlName="nom"
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [class.border-red-500]="clientForm.get('nom')?.invalid && clientForm.get('nom')?.touched">
+      @if (clientForm.get('nom')?.invalid && clientForm.get('nom')?.touched) {
+        <p class="mt-1 text-sm text-red-600">Le nom est requis</p>
+      }
+    </div>
+
+    <div class="mb-4">
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+        Email *
+      </label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [class.border-red-500]="clientForm.get('email')?.invalid && clientForm.get('email')?.touched">
+      @if (clientForm.get('email')?.hasError('required') && clientForm.get('email')?.touched) {
+        <p class="mt-1 text-sm text-red-600">L'email est requis</p>
+      }
+      @if (clientForm.get('email')?.hasError('email') && clientForm.get('email')?.touched) {
+        <p class="mt-1 text-sm text-red-600">Format d'email invalide</p>
+      }
+    </div>
+
+    <div class="mb-4">
+      <label for="telephone" class="block text-sm font-medium text-gray-700 mb-2">
+        Téléphone *
+      </label>
+      <input
+        id="telephone"
+        type="tel"
+        formControlName="telephone"
+        placeholder="06 12 34 56 78"
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [class.border-red-500]="clientForm.get('telephone')?.invalid && clientForm.get('telephone')?.touched">
+      @if (clientForm.get('telephone')?.hasError('required') && clientForm.get('telephone')?.touched) {
+        <p class="mt-1 text-sm text-red-600">Le téléphone est requis</p>
+      }
+      @if (clientForm.get('telephone')?.hasError('pattern') && clientForm.get('telephone')?.touched) {
+        <p class="mt-1 text-sm text-red-600">Format invalide (ex: 0612345678)</p>
+      }
+    </div>
+
+    <div class="mb-4">
+      <label for="adresse" class="block text-sm font-medium text-gray-700 mb-2">
+        Adresse *
+      </label>
+      <textarea
+        id="adresse"
+        formControlName="adresse"
+        rows="3"
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        [class.border-red-500]="clientForm.get('adresse')?.invalid && clientForm.get('adresse')?.touched">
+      </textarea>
+      @if (clientForm.get('adresse')?.invalid && clientForm.get('adresse')?.touched) {
+        <p class="mt-1 text-sm text-red-600">L'adresse est requise</p>
+      }
+    </div>
+
+    <div class="mb-6">
+      <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+        Notes (optionnel)
+      </label>
+      <textarea
+        id="notes"
+        formControlName="notes"
+        rows="3"
+        placeholder="Informations complémentaires..."
+        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </textarea>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button
+        type="submit"
+        [disabled]="clientForm.invalid || loading()"
+        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        @if (loading()) {
+          <span class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Enregistrement...
+          </span>
+        } @else {
+          {{ isEditMode ? 'Enregistrer les modifications' : 'Créer le client' }}
+        }
+      </button>
+      <button
+        type="button"
+        (click)="goBack()"
+        class="flex-1 sm:flex-initial bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+        Annuler
+      </button>
+    </div>
+  </form>
+  @if (errorMessage()) {
+    <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+    </div>
+  }
+</div>
