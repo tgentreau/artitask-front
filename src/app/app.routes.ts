@@ -1,12 +1,10 @@
-// src/app/app.routes.ts
-
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'auth',
-    loadComponent: () => import('./core/auth/auth.component').then(m => m.AuthComponent)
+    loadChildren: () => import('./core/auth/auth.routes').then(m => m.authRoutes)
   },
   {
     path: 'dashboard',
@@ -37,5 +35,9 @@ export const routes: Routes = [
     path: '',
     redirectTo: '/dashboard',
     pathMatch: 'full'
+  },
+  {
+    path: '**',
+    redirectTo: '/dashboard'
   }
 ];

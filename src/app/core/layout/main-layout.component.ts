@@ -18,8 +18,8 @@ export class MainLayoutComponent {
 
   getUserInitials(): string {
     const user = this.authService.currentUser$();
-    if (user?.companyName) {
-      return user.companyName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    if (user?.nomEntreprise) {
+      return user.nomEntreprise.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
     return 'AR';
   }
