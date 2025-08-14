@@ -1,26 +1,24 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
   HttpInterceptor,
-  HttpErrorResponse,
+  HttpErrorResponse
 } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
-import { AuthService } from '../auth/services/auth.service';
 import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  private authService = inject(AuthService);
-  private router = inject(Router);
-
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
+  constructor(private router: Router) {}
+
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.authService.getAccessToken();
+    const token = this.getAccessToken();
 
     if (token && !this.isPublicEndpoint(request.url)) {
       request = this.addToken(request, token);
@@ -34,7 +32,7 @@ export class AuthInterceptor implements HttpInterceptor {
           }
 
           if (error.status === 403) {
-            this.authService.logout();
+            this.logout();
             return throwError(() => ({
               message: 'Accès refusé. Veuillez vous reconnecter.',
               status: error.status
@@ -73,17 +71,25 @@ export class AuthInterceptor implements HttpInterceptor {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
 
-      return this.authService.refreshToken().pipe(
+      const refreshToken = this.getRefreshToken();
+
+      if (!refreshToken) {
+        this.logout();
+        return throwError(() => new Error('No refresh token available'));
+      }
+
+      return this.refreshTokenRequest(refreshToken, next).pipe(
         switchMap((response: any) => {
           this.isRefreshing = false;
           const newToken = response.data.accessToken;
+          this.storeTokens(response.data.accessToken, response.data.refreshToken);
           this.refreshTokenSubject.next(newToken);
 
           return next.handle(this.addToken(request, newToken));
         }),
         catchError((err) => {
           this.isRefreshing = false;
-          this.authService.logout();
+          this.logout();
           return throwError(() => err);
         }),
         finalize(() => {
@@ -101,12 +107,37 @@ export class AuthInterceptor implements HttpInterceptor {
     }
   }
 
+  private refreshTokenRequest(refreshToken: string, next: HttpHandler): Observable<any> {
+    const request = new HttpRequest('POST', '/api/auth/refresh', { refreshToken });
+    return next.handle(request);
+  }
+
   private addToken(request: HttpRequest<any>, token: string): HttpRequest<any> {
     return request.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
       }
     });
+  }
+
+  private getAccessToken(): string | null {
+    return localStorage.getItem('access_token');
+  }
+
+  private getRefreshToken(): string | null {
+    return localStorage.getItem('refresh_token');
+  }
+
+  private storeTokens(accessToken: string, refreshToken: string): void {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+  }
+
+  private logout(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/auth/login']);
   }
 
   private isPublicEndpoint(url: string): boolean {

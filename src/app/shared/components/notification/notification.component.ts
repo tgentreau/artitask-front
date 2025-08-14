@@ -1,17 +1,21 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService } from '../../services/notification.service';
+import { NotificationService } from '../../../core/auth/services/notification.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
   imports: [CommonModule],
-  template: './notification.component.html',
+  templateUrl: './notification.component.html',
   styles: [`
     @keyframes shrink {
-      from { width: 100%; }
-      to { width: 0%; }
+      from {
+        width: 100%;
+      }
+      to {
+        width: 0;
+      }
     }
 
     @keyframes slideIn {

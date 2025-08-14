@@ -5,17 +5,19 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { MainLayoutComponent } from './core/layout/main-layout.component';
 import { AuthService } from './core/auth/services/auth.service';
+import {NotificationComponent} from "./shared/components/notification/notification.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MainLayoutComponent],
+  imports: [CommonModule, RouterOutlet, MainLayoutComponent, NotificationComponent],
   template: `
     @if (authService.isAuthenticated$()) {
       <app-layout></app-layout>
     }
     @else {
       <router-outlet></router-outlet>
+      <app-notifications />
     }
   `
 })
