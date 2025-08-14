@@ -68,10 +68,17 @@ export const DEFAULT_MAJORATIONS = {
   nuit: 1.3
 };
 
-/**
- * Tarifs par défaut par type de service (indicatif)
- */
-export const DEFAULT_TARIFS = {
+interface TarifDefaults {
+horaire?: number;
+fixe?: number;
+deplacement?: number;
+}
+
+interface DefaultTarifsMap {
+  [key: string]: TarifDefaults;
+}
+
+export const DEFAULT_TARIFS: DefaultTarifsMap = {
   plomberie: { horaire: 45, deplacement: 30 },
   electricite: { horaire: 50, deplacement: 30 },
   chauffage: { horaire: 55, deplacement: 35 },

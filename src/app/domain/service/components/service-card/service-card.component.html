@@ -1,0 +1,92 @@
+<div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200">
+  <div class="p-4 border-b border-gray-100">
+    <div class="flex justify-between items-start">
+      <div class="flex items-center space-x-3">
+        <input
+          type="checkbox"
+          [checked]="selected"
+          (click)="onSelect($event)"
+          class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500">
+        <span class="text-2xl">{{ getServiceIcon() }}</span>
+      </div>
+      <span
+        [class]="service.actif ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+        class="px-2 py-1 text-xs font-medium rounded-full">
+        {{ service.actif ? 'Actif' : 'Inactif' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="p-4">
+    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ service.nom }}</h3>
+    <p class="text-sm text-gray-500 mb-3">{{ service.type.label }}</p>
+    <p class="text-sm text-gray-600 line-clamp-2 mb-4">{{ service.description }}</p>
+    <div class="space-y-2 mb-4">
+      @if (service.tarification.tarifHoraire) {
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Tarif horaire</span>
+          <span class="text-sm font-medium text-gray-900">
+            {{ formatPrice(service.tarification.tarifHoraire) }}/h
+          </span>
+        </div>
+      }
+      @if (service.tarification.tarifFixe) {
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Tarif fixe</span>
+          <span class="text-sm font-medium text-gray-900">
+            {{ formatPrice(service.tarification.tarifFixe) }}
+          </span>
+        </div>
+      }
+      @if (service.tarification.fraisDeplacement) {
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-500">Frais déplacement</span>
+          <span class="text-sm font-medium text-gray-900">
+            {{ formatPrice(service.tarification.fraisDeplacement) }}
+          </span>
+        </div>
+      }
+    </div>
+    @if (service.tarification.majorationUrgence > 1 || service.tarification.majorationWeekend > 1) {
+      <div class="flex gap-2 mb-4">
+        @if (service.tarification.majorationUrgence > 1) {
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+            🚨 {{ formatMajoration(service.tarification.majorationUrgence) }}
+          </span>
+        }
+        @if (service.tarification.majorationWeekend > 1) {
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            📅 {{ formatMajoration(service.tarification.majorationWeekend) }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+      <div class="flex space-x-2">
+        <button
+          (click)="onEdit($event)"
+          class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+          Modifier
+        </button>
+        <button
+          (click)="onDuplicate($event)"
+          class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+          Dupliquer
+        </button>
+      </div>
+      <div class="flex space-x-2">
+        <button
+          (click)="onEstimate($event)"
+          class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded hover:bg-blue-100 transition-colors">
+          Estimer
+        </button>
+        <button
+          (click)="onToggle($event)"
+          [class]="service.actif ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'"
+          class="text-sm font-medium">
+          {{ service.actif ? 'Désactiver' : 'Activer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

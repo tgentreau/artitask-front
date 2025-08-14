@@ -34,7 +34,6 @@ export class ServiceListComponent implements OnInit {
   statusColors = STATUS_COLORS;
 
   private searchResults = signal<Service[]>([]);
-
   ngOnInit(): void {
     this.loadServices();
   }
@@ -276,6 +275,10 @@ export class ServiceListComponent implements OnInit {
   getServiceTypeLabel(type: string): string {
     const serviceType = this.serviceTypes.find(t => t.value === type);
     return serviceType?.label || type;
+  }
+
+  clearSelection(): void {
+    this.selectedServices.set(new Set());
   }
 
   protected Math = Math;

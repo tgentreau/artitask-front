@@ -1,12 +1,10 @@
-// src/app/domain/service/components/service-form/service-form.component.ts
-
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ServiceService } from '../../services/service.service';
 import { SERVICE_TYPES, DEFAULT_MAJORATIONS, DEFAULT_TARIFS, SERVICE_VALIDATION_MESSAGES } from '../../models/service.constants';
-import { Service } from '../../models/service.model';
+import {CreateServiceRequest, Service, UpdateServiceRequest} from '../../models/service.model';
 import {NotificationService} from "../../../../shared/services/notification.service";
 
 @Component({
@@ -101,14 +99,12 @@ export class ServiceFormComponent implements OnInit {
   }
 
   populateForm(service: Service): void {
-    // Déterminer le mode de tarification
     if (service.tarification.tarifHoraire) {
       this.tarifMode.set('hourly');
     } else if (service.tarification.tarifFixe) {
       this.tarifMode.set('fixed');
     }
 
-    // Remplir le formulaire
     this.serviceForm.patchValue({
       nom: service.nom,
       description: service.description,
@@ -123,9 +119,7 @@ export class ServiceFormComponent implements OnInit {
 
   onTypeChange(type: string): void {
     if (!type || this.isEditMode) return;
-
-    // Suggérer des tarifs par défaut selon le type
-    const defaults = this.defaultTarifs[type as keyof typeof this.defaultTarifs];
+    const defaults = this.defaultTarifs[type];
     if (defaults) {
       if ('horaire' in defaults && this.tarifMode() === 'hourly') {
         this.serviceForm.patchValue({
@@ -144,12 +138,11 @@ export class ServiceFormComponent implements OnInit {
   toggleTarifMode(mode: 'hourly' | 'fixed'): void {
     this.tarifMode.set(mode);
 
-    // Réinitialiser les champs de tarif
     if (mode === 'hourly') {
       this.serviceForm.patchValue({
         tarifFixe: null,
         tarifHoraire: this.serviceForm.get('tarifHoraire')?.value ||
-          this.defaultTarifs[this.serviceForm.get('type')?.value as keyof typeof this.defaultTarifs]?.horaire ||
+          (this.defaultTarifs[this.serviceForm.get('type')?.value as keyof typeof this.defaultTarifs] as any)?.horaire ||
           45
       });
     } else {
@@ -159,12 +152,59 @@ export class ServiceFormComponent implements OnInit {
       });
     }
 
-    // Revalider le formulaire
     this.serviceForm.updateValueAndValidity();
   }
 
   toggleAdvancedOptions(): void {
     this.showAdvancedOptions.update(show => !show);
+  }
+
+  prepareCreateData(): CreateServiceRequest {
+    const formValue = this.serviceForm.value;
+
+    const data: CreateServiceRequest = {
+      nom: formValue.nom,
+      description: formValue.description,
+      type: formValue.type,
+      majorationUrgence: formValue.majorationUrgence,
+      majorationWeekend: formValue.majorationWeekend
+    };
+
+    if (this.tarifMode() === 'hourly' && formValue.tarifHoraire) {
+      data.tarifHoraire = formValue.tarifHoraire;
+    } else if (formValue.tarifFixe) {
+      data.tarifFixe = formValue.tarifFixe;
+    }
+
+    if (formValue.fraisDeplacement) {
+      data.fraisDeplacement = formValue.fraisDeplacement;
+    }
+
+    return data;
+  }
+
+  prepareUpdateData(): UpdateServiceRequest {
+    const formValue = this.serviceForm.value;
+
+    const data: UpdateServiceRequest = {
+      nom: formValue.nom,
+      description: formValue.description,
+      type: formValue.type,
+      majorationUrgence: formValue.majorationUrgence,
+      majorationWeekend: formValue.majorationWeekend
+    };
+
+    if (this.tarifMode() === 'hourly' && formValue.tarifHoraire !== null) {
+      data.tarifHoraire = formValue.tarifHoraire;
+    } else if (formValue.tarifFixe !== null) {
+      data.tarifFixe = formValue.tarifFixe;
+    }
+
+    if (formValue.fraisDeplacement !== null) {
+      data.fraisDeplacement = formValue.fraisDeplacement;
+    }
+
+    return data;
   }
 
   onSubmit(): void {
@@ -178,53 +218,41 @@ export class ServiceFormComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
-    const formValue = this.prepareFormData();
 
-    const request = this.isEditMode && this.serviceId
-      ? this.serviceService.updateService(this.serviceId, formValue)
-      : this.serviceService.createService(formValue);
-
-    request.subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        const message = this.isEditMode ? 'Service modifié' : 'Service créé';
-        this.notificationService.success(message, 'Opération réussie');
-        this.router.navigate(['/services']);
-      },
-      error: (error) => {
-        this.isSubmitting.set(false);
-        console.error('Erreur lors de la sauvegarde:', error);
-      }
-    });
-  }
-
-  prepareFormData(): any {
-    const formValue = { ...this.serviceForm.value };
-
-    // Nettoyer les tarifs selon le mode
-    if (this.tarifMode() === 'hourly') {
-      delete formValue.tarifFixe;
+    if (this.isEditMode && this.serviceId) {
+      const updateData = this.prepareUpdateData();
+      this.serviceService.updateService(this.serviceId, updateData).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.notificationService.success('Service modifié', 'Opération réussie');
+          this.router.navigate(['/services']);
+        },
+        error: (error) => {
+          this.isSubmitting.set(false);
+          console.error('Erreur lors de la modification:', error);
+          this.notificationService.error(
+            'Erreur de sauvegarde',
+            'Une erreur est survenue lors de la modification'
+          );
+        }
+      });
     } else {
-      delete formValue.tarifHoraire;
-    }
-
-    // Supprimer les valeurs null
-    Object.keys(formValue).forEach(key => {
-      if (formValue[key] === null || formValue[key] === '') {
-        delete formValue[key];
-      }
-    });
-
-    return formValue;
-  }
-
-  cancel(): void {
-    if (this.serviceForm.dirty) {
-      if (confirm('Des modifications non sauvegardées seront perdues. Continuer ?')) {
-        this.router.navigate(['/services']);
-      }
-    } else {
-      this.router.navigate(['/services']);
+      const createData = this.prepareCreateData();
+      this.serviceService.createService(createData).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.notificationService.success('Service créé', 'Opération réussie');
+          this.router.navigate(['/services']);
+        },
+        error: (error) => {
+          this.isSubmitting.set(false);
+          console.error('Erreur lors de la création:', error);
+          this.notificationService.error(
+            'Erreur de sauvegarde',
+            'Une erreur est survenue lors de la création'
+          );
+        }
+      });
     }
   }
 
@@ -271,13 +299,30 @@ export class ServiceFormComponent implements OnInit {
     const errors = control.errors;
     const messages = this.validationMessages[fieldName as keyof typeof this.validationMessages];
 
-    if (!messages) return '';
+    if (!messages) return 'Erreur de validation';
 
-    if (errors['required']) return messages.required;
-    if (errors['minlength']) return messages.minlength;
-    if (errors['maxlength']) return messages.maxlength;
-    if (errors['min']) return messages.min || 'Valeur trop petite';
-    if (errors['max']) return messages.max || 'Valeur trop grande';
+    if (errors['required'] && 'required' in messages) return messages.required;
+    if (errors['minlength'] && 'minlength' in messages) return messages.minlength;
+    if (errors['maxlength'] && 'maxlength' in messages) return messages.maxlength;
+    if (errors['min'] && 'min' in messages) return messages.min;
+    if (errors['max'] && 'max' in messages) return messages.max;
+
+    if (fieldName === 'tarifHoraire' || fieldName === 'tarifFixe') {
+      const tarifMessages = this.validationMessages.tarif;
+      if (errors['min']) return tarifMessages.min;
+      if (errors['max']) return tarifMessages.max;
+    }
+
+    if (fieldName === 'majorationUrgence' || fieldName === 'majorationWeekend') {
+      const majorationMessages = this.validationMessages.majoration;
+      if (errors['min']) return majorationMessages.min;
+      if (errors['max']) return majorationMessages.max;
+    }
+
+    if (fieldName === 'fraisDeplacement') {
+      const fraisMessages = this.validationMessages.fraisDeplacement;
+      if (errors['min']) return fraisMessages.min;
+    }
 
     return 'Erreur de validation';
   }
