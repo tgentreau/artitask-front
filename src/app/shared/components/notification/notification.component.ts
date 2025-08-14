@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../../core/auth/services/notification.service';
-import { animate, style, transition, trigger } from '@angular/animations';
+import {animate, state, style, transition, trigger} from '@angular/animations';
 
 @Component({
   selector: 'app-notifications',
@@ -9,35 +9,39 @@ import { animate, style, transition, trigger } from '@angular/animations';
   imports: [CommonModule],
   templateUrl: './notification.component.html',
   styles: [`
-    @keyframes shrink {
-      from {
-        width: 100%;
-      }
-      to {
-        width: 0;
-      }
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+    :host {
+      display: contents;
     }
   `],
   animations: [
     trigger('slideIn', [
       transition(':enter', [
-        style({ transform: 'translateX(100%)', opacity: 0 }),
-        animate('300ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+        style({
+          opacity: 0,
+          transform: 'translateX(100%)'
+        }),
+        animate('300ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          style({
+            opacity: 1,
+            transform: 'translateX(0)'
+          })
+        )
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
+        animate('200ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          style({
+            opacity: 0,
+            transform: 'translateX(100%)'
+          })
+        )
       ])
+    ]),
+    trigger('progress', [
+      state('active', style({ width: '0%' })),
+      transition('* => active', [
+        style({ width: '100%' }),
+        animate('{{ duration }}ms linear', style({ width: '0%' }))
+      ], { params: { duration: 5000 } })
     ])
   ]
 })
