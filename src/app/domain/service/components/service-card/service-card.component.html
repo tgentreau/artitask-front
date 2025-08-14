@@ -1,4 +1,5 @@
 <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200">
+  <!-- En-tête avec checkbox et statut -->
   <div class="p-4 border-b border-gray-100">
     <div class="flex justify-between items-start">
       <div class="flex items-center space-x-3">
@@ -17,10 +18,16 @@
     </div>
   </div>
 
+  <!-- Corps de la carte -->
   <div class="p-4">
+    <!-- Nom et type -->
     <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ service.nom }}</h3>
     <p class="text-sm text-gray-500 mb-3">{{ service.type.label }}</p>
+
+    <!-- Description -->
     <p class="text-sm text-gray-600 line-clamp-2 mb-4">{{ service.description }}</p>
+
+    <!-- Tarification -->
     <div class="space-y-2 mb-4">
       @if (service.tarification.tarifHoraire) {
         <div class="flex justify-between items-center">
@@ -47,6 +54,8 @@
         </div>
       }
     </div>
+
+    <!-- Majorations -->
     @if (service.tarification.majorationUrgence > 1 || service.tarification.majorationWeekend > 1) {
       <div class="flex gap-2 mb-4">
         @if (service.tarification.majorationUrgence > 1) {
@@ -61,6 +70,8 @@
         }
       </div>
     }
+
+    <!-- Actions -->
     <div class="flex justify-between items-center pt-4 border-t border-gray-100">
       <div class="flex space-x-2">
         <button
@@ -74,19 +85,11 @@
           Dupliquer
         </button>
       </div>
-      <div class="flex space-x-2">
-        <button
-          (click)="onEstimate($event)"
-          class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded hover:bg-blue-100 transition-colors">
-          Estimer
-        </button>
-        <button
-          (click)="onToggle($event)"
-          [class]="service.actif ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'"
-          class="text-sm font-medium">
-          {{ service.actif ? 'Désactiver' : 'Activer' }}
-        </button>
-      </div>
+      <button
+        (click)="onEstimate($event)"
+        class="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded hover:bg-blue-100 transition-colors">
+        Estimer
+      </button>
     </div>
   </div>
 </div>

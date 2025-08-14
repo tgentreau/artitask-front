@@ -200,9 +200,7 @@
       @if (viewMode() === 'grid') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (service of displayedServices(); track service.id) {
-            <div
-              (click)="viewService(service)"
-              class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
+            <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
 
               <!-- Header avec type et statut -->
               <div class="px-6 py-4 border-b bg-gray-50">
@@ -248,10 +246,10 @@
                       <span class="text-orange-600">{{ formatMajoration(service.tarification.majorationUrgence) }}</span>
                     </div>
                   }
-                  @if (service.tarification.fraisDeplacement) {
+                  @if (service.tarification.majorationWeekend > 1) {
                     <div class="flex justify-between">
-                      <span class="text-gray-500">Frais déplacement:</span>
-                      <span>{{ formatPrice(service.tarification.fraisDeplacement) }}</span>
+                      <span class="text-gray-500">Majoration weekend:</span>
+                      <span class="text-blue-600">{{ formatMajoration(service.tarification.majorationWeekend) }}</span>
                     </div>
                   }
                 </div>
