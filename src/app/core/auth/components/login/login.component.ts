@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { NotificationService } from '../../services/notification.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 import {AuthService} from "../../services/auth.service";
 
 @Component({

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService } from '../../../core/auth/services/notification.service';
+import { NotificationService } from '../../services/notification.service';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 
 @Component({
