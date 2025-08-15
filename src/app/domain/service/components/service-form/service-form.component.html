@@ -71,6 +71,8 @@
               id="type"
               formControlName="type"
               [class.border-red-500]="hasError('type')"
+              [class.bg-gray-100]="isEditMode"
+              [class.cursor-not-allowed]="isEditMode"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
               <option value="">Sélectionnez un type</option>
               @for (type of serviceTypes; track type.value) {
@@ -82,7 +84,12 @@
             @if (hasError('type')) {
               <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('type') }}</p>
             }
-            @if (serviceForm.get('type')?.value) {
+            @if (isEditMode) {
+              <p class="mt-1 text-sm text-gray-500 italic">
+                Le type de service ne peut pas être modifié après création
+              </p>
+            }
+            @if (serviceForm.get('type')?.value && !isEditMode) {
               <p class="mt-1 text-sm text-gray-500">
                 {{ getTypeDescription(serviceForm.get('type')?.value) }}
               </p>
@@ -110,9 +117,11 @@
                 [class.ring-2]="tarifMode() === 'hourly'"
                 [class.ring-blue-500]="tarifMode() === 'hourly'"
                 [class.bg-blue-50]="tarifMode() === 'hourly'"
-                class="px-4 py-3 border rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
-                <span class="text-lg">⏰</span>
-                <span class="font-medium">Tarif horaire</span>
+                class="px-4 py-3 border rounded-lg flex items-center justify-center hover:bg-gray-50">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Tarif horaire
               </button>
               <button
                 type="button"
@@ -120,106 +129,113 @@
                 [class.ring-2]="tarifMode() === 'fixed'"
                 [class.ring-blue-500]="tarifMode() === 'fixed'"
                 [class.bg-blue-50]="tarifMode() === 'fixed'"
-                class="px-4 py-3 border rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
-                <span class="text-lg">💰</span>
-                <span class="font-medium">Tarif fixe</span>
+                class="px-4 py-3 border rounded-lg flex items-center justify-center hover:bg-gray-50">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                Tarif fixe
               </button>
             </div>
           </div>
 
-          <!-- Champs de tarif -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @if (tarifMode() === 'hourly') {
-              <div>
-                <label for="tarifHoraire" class="block text-sm font-medium text-gray-700 mb-1">
-                  Tarif horaire (€/h) <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input
-                    type="number"
-                    id="tarifHoraire"
-                    formControlName="tarifHoraire"
-                    min="0"
-                    max="1000"
-                    step="5"
-                    [class.border-red-500]="hasError('tarifHoraire')"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ex: 45">
-                  <span class="absolute right-3 top-2 text-gray-500">€/h</span>
-                </div>
-                @if (hasError('tarifHoraire')) {
-                  <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifHoraire') }}</p>
-                }
-              </div>
-            } @else {
-              <div>
-                <label for="tarifFixe" class="block text-sm font-medium text-gray-700 mb-1">
-                  Tarif fixe (€) <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input
-                    type="number"
-                    id="tarifFixe"
-                    formControlName="tarifFixe"
-                    min="0"
-                    max="10000"
-                    step="10"
-                    [class.border-red-500]="hasError('tarifFixe')"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ex: 150">
-                  <span class="absolute right-3 top-2 text-gray-500">€</span>
-                </div>
-                @if (hasError('tarifFixe')) {
-                  <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifFixe') }}</p>
-                }
-              </div>
-            }
-
-            <!-- Frais de déplacement -->
-            <div>
-              <label for="fraisDeplacement" class="block text-sm font-medium text-gray-700 mb-1">
-                Frais de déplacement (€)
+          <!-- Tarif horaire -->
+          @if (tarifMode() === 'hourly') {
+            <div class="mb-6">
+              <label for="tarifHoraire" class="block text-sm font-medium text-gray-700 mb-1">
+                Tarif horaire (€/h) <span class="text-red-500">*</span>
               </label>
               <div class="relative">
                 <input
                   type="number"
-                  id="fraisDeplacement"
-                  formControlName="fraisDeplacement"
+                  id="tarifHoraire"
+                  formControlName="tarifHoraire"
+                  step="0.01"
                   min="0"
-                  max="500"
-                  step="5"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: 30">
-                <span class="absolute right-3 top-2 text-gray-500">€</span>
+                  max="1000"
+                  [class.border-red-500]="hasError('tarifHoraire')"
+                  class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="45">
+                <span class="absolute right-3 top-2.5 text-gray-500">€</span>
               </div>
+              @if (hasError('tarifHoraire')) {
+                <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifHoraire') }}</p>
+              }
             </div>
+          }
+
+          <!-- Tarif fixe -->
+          @if (tarifMode() === 'fixed') {
+            <div class="mb-6">
+              <label for="tarifFixe" class="block text-sm font-medium text-gray-700 mb-1">
+                Tarif fixe (€) <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="tarifFixe"
+                  formControlName="tarifFixe"
+                  step="0.01"
+                  min="0"
+                  max="10000"
+                  [class.border-red-500]="hasError('tarifFixe')"
+                  class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="150">
+                <span class="absolute right-3 top-2.5 text-gray-500">€</span>
+              </div>
+              @if (hasError('tarifFixe')) {
+                <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifFixe') }}</p>
+              }
+            </div>
+          }
+
+          <!-- Frais de déplacement -->
+          <div class="mb-6">
+            <label for="fraisDeplacement" class="block text-sm font-medium text-gray-700 mb-1">
+              Frais de déplacement (€)
+            </label>
+            <div class="relative">
+              <input
+                type="number"
+                id="fraisDeplacement"
+                formControlName="fraisDeplacement"
+                step="0.01"
+                min="0"
+                max="500"
+                [class.border-red-500]="hasError('fraisDeplacement')"
+                class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="0">
+              <span class="absolute right-3 top-2.5 text-gray-500">€</span>
+            </div>
+            @if (hasError('fraisDeplacement')) {
+              <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('fraisDeplacement') }}</p>
+            }
           </div>
 
-          <!-- Majorations -->
-          <div class="mt-6">
+          <!-- Options avancées -->
+          <div class="border-t pt-4">
             <button
               type="button"
               (click)="toggleAdvancedOptions()"
-              class="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+              class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900">
               <svg
                 [class.rotate-90]="showAdvancedOptions()"
-                class="w-4 h-4 transition-transform"
+                class="w-4 h-4 mr-2 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
-              <span>Majorations tarifaires</span>
+              Options avancées (majorations)
             </button>
 
             @if (showAdvancedOptions()) {
-              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div class="mt-4 space-y-4">
                 <!-- Majoration urgence -->
                 <div>
                   <label for="majorationUrgence" class="block text-sm font-medium text-gray-700 mb-1">
                     Majoration urgence
                   </label>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-4">
                     <input
                       type="range"
                       id="majorationUrgence"
@@ -228,13 +244,10 @@
                       max="3"
                       step="0.1"
                       class="flex-1">
-                    <span class="w-16 text-sm font-medium text-gray-900 text-right">
-                      {{ formatMajoration(serviceForm.get('majorationUrgence')?.value || 1) }}
+                    <span class="text-sm font-medium text-gray-900 w-16 text-right">
+                      {{ formatMajorationDisplay(serviceForm.get('majorationUrgence')?.value || 1) }}
                     </span>
                   </div>
-                  <p class="mt-1 text-xs text-gray-500">
-                    Appliquée pour les interventions urgentes
-                  </p>
                 </div>
 
                 <!-- Majoration weekend -->
@@ -242,7 +255,7 @@
                   <label for="majorationWeekend" class="block text-sm font-medium text-gray-700 mb-1">
                     Majoration weekend
                   </label>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-4">
                     <input
                       type="range"
                       id="majorationWeekend"
@@ -251,33 +264,14 @@
                       max="3"
                       step="0.1"
                       class="flex-1">
-                    <span class="w-16 text-sm font-medium text-gray-900 text-right">
-                      {{ formatMajoration(serviceForm.get('majorationWeekend')?.value || 1) }}
+                    <span class="text-sm font-medium text-gray-900 w-16 text-right">
+                      {{ formatMajorationDisplay(serviceForm.get('majorationWeekend')?.value || 1) }}
                     </span>
                   </div>
-                  <p class="mt-1 text-xs text-gray-500">
-                    Appliquée pour les weekends et jours fériés
-                  </p>
                 </div>
               </div>
             }
           </div>
-
-          <!-- Erreur de validation tarif -->
-          @if (serviceForm.hasError('tarifRequired')) {
-            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p class="text-sm text-red-600">
-                Vous devez spécifier un tarif horaire ou un tarif fixe
-              </p>
-            </div>
-          }
-          @if (serviceForm.hasError('tarifConflict')) {
-            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p class="text-sm text-red-600">
-                Vous ne pouvez pas spécifier à la fois un tarif horaire et un tarif fixe
-              </p>
-            </div>
-          }
         </div>
       </div>
 
@@ -286,28 +280,19 @@
         <button
           type="button"
           [routerLink]="['/services']"
-          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+          class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
           Annuler
         </button>
         <button
-          type="button"
-          (click)="resetForm()"
-          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-          Réinitialiser
-        </button>
-        <button
           type="submit"
-          [disabled]="isSubmitting() || serviceForm.invalid"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          [disabled]="serviceForm.invalid || isSubmitting()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
           @if (isSubmitting()) {
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg class="inline-block w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            En cours...
-          } @else {
-            {{ isEditMode ? 'Mettre à jour' : 'Créer le service' }}
           }
+          {{ isEditMode ? 'Mettre à jour' : 'Créer le service' }}
         </button>
       </div>
     </form>
