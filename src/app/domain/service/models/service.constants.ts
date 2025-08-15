@@ -3,34 +3,22 @@
  */
 export const SERVICE_TYPES = [
   {
-    value: 'plomberie',
-    label: 'Plomberie',
+    value: 'maintenance',
+    label: 'Maintenance',
     icon: '🔧',
-    description: 'Travaux de plomberie générale'
+    description: 'Maintenance préventive et entretien régulier'
   },
   {
-    value: 'electricite',
-    label: 'Électricité',
-    icon: '⚡',
-    description: 'Installation et dépannage électrique'
+    value: 'reparation',
+    label: 'Réparation',
+    icon: '🔨',
+    description: 'Réparation de pannes et dysfonctionnements'
   },
   {
-    value: 'chauffage',
-    label: 'Chauffage',
-    icon: '🔥',
-    description: 'Installation et entretien de chauffage'
-  },
-  {
-    value: 'climatisation',
-    label: 'Climatisation',
-    icon: '❄️',
-    description: 'Installation et maintenance de climatisation'
-  },
-  {
-    value: 'diagnostic',
-    label: 'Diagnostic',
-    icon: '🔍',
-    description: 'Diagnostic technique et expertise'
+    value: 'installation',
+    label: 'Installation',
+    icon: '⚙️',
+    description: 'Installation de nouveaux équipements'
   },
   {
     value: 'urgence',
@@ -39,22 +27,16 @@ export const SERVICE_TYPES = [
     description: 'Intervention d\'urgence 24/7'
   },
   {
-    value: 'maintenance',
-    label: 'Maintenance',
-    icon: '🛠️',
-    description: 'Maintenance préventive et curative'
+    value: 'diagnostic',
+    label: 'Diagnostic',
+    icon: '🔍',
+    description: 'Diagnostic et expertise technique'
   },
   {
-    value: 'renovation',
-    label: 'Rénovation',
-    icon: '🏗️',
-    description: 'Travaux de rénovation'
-  },
-  {
-    value: 'autre',
-    label: 'Autre',
-    icon: '📋',
-    description: 'Autres services'
+    value: 'conseil',
+    label: 'Conseil',
+    icon: '💡',
+    description: 'Conseil et accompagnement technique'
   }
 ] as const;
 
@@ -68,10 +50,13 @@ export const DEFAULT_MAJORATIONS = {
   nuit: 1.3
 };
 
+/**
+ * Tarifs par défaut par type de service
+ */
 interface TarifDefaults {
-horaire?: number;
-fixe?: number;
-deplacement?: number;
+  horaire?: number;
+  fixe?: number;
+  deplacement?: number;
 }
 
 interface DefaultTarifsMap {
@@ -79,15 +64,12 @@ interface DefaultTarifsMap {
 }
 
 export const DEFAULT_TARIFS: DefaultTarifsMap = {
-  plomberie: { horaire: 45, deplacement: 30 },
-  electricite: { horaire: 50, deplacement: 30 },
-  chauffage: { horaire: 55, deplacement: 35 },
-  climatisation: { horaire: 60, deplacement: 35 },
-  diagnostic: { fixe: 150, deplacement: 25 },
+  maintenance: { horaire: 45, deplacement: 30 },
+  reparation: { horaire: 50, deplacement: 35 },
+  installation: { horaire: 55, deplacement: 40 },
   urgence: { horaire: 80, deplacement: 50 },
-  maintenance: { horaire: 40, deplacement: 25 },
-  renovation: { horaire: 35, deplacement: 20 },
-  autre: { horaire: 40, deplacement: 25 }
+  diagnostic: { fixe: 150, deplacement: 25 },
+  conseil: { fixe: 100, deplacement: 20 }
 };
 
 /**

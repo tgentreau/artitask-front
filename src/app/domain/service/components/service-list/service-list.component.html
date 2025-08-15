@@ -196,131 +196,34 @@
         </div>
       </div>
     } @else {
-      <!-- Vue grille -->
+      <!-- Vue grille avec ServiceCardComponent -->
       @if (viewMode() === 'grid') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (service of displayedServices(); track service.id) {
-            <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
-
-              <!-- Header avec type et statut -->
-              <div class="px-6 py-4 border-b bg-gray-50">
-                <div class="flex items-center justify-between">
-                  <span class="text-2xl">{{ getServiceTypeIcon(service.type.value) }}</span>
-                  <div class="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      [checked]="selectedServices().has(service.id)"
-                      (click)="toggleServiceSelection(service.id, $event)"
-                      class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500">
-                    <span
-                      [class]="service.actif ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
-                      class="px-2 py-1 text-xs font-medium rounded-full">
-                      {{ service.actif ? 'Actif' : 'Inactif' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Contenu -->
-              <div class="px-6 py-4">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ service.nom }}</h3>
-                <p class="text-sm text-gray-600 line-clamp-2 mb-4">{{ service.description }}</p>
-
-                <!-- Tarification -->
-                <div class="space-y-2 text-sm">
-                  @if (service.tarification.tarifHoraire) {
-                    <div class="flex justify-between">
-                      <span class="text-gray-500">Tarif horaire:</span>
-                      <span class="font-medium">{{ formatPrice(service.tarification.tarifHoraire) }}</span>
-                    </div>
-                  }
-                  @if (service.tarification.tarifFixe) {
-                    <div class="flex justify-between">
-                      <span class="text-gray-500">Tarif fixe:</span>
-                      <span class="font-medium">{{ formatPrice(service.tarification.tarifFixe) }}</span>
-                    </div>
-                  }
-                  @if (service.tarification.majorationUrgence > 1) {
-                    <div class="flex justify-between">
-                      <span class="text-gray-500">Majoration urgence:</span>
-                      <span class="text-orange-600">{{ formatMajoration(service.tarification.majorationUrgence) }}</span>
-                    </div>
-                  }
-                  @if (service.tarification.majorationWeekend > 1) {
-                    <div class="flex justify-between">
-                      <span class="text-gray-500">Majoration weekend:</span>
-                      <span class="text-blue-600">{{ formatMajoration(service.tarification.majorationWeekend) }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="px-6 py-3 bg-gray-50 border-t flex justify-between">
-                <div class="flex space-x-2">
-                  <button
-                    (click)="editService(service, $event)"
-                    class="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    title="Modifier">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                  </button>
-                  <button
-                    (click)="duplicateService(service, $event)"
-                    class="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Dupliquer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
-                  </button>
-                  <button
-                    (click)="calculateEstimate(service, $event)"
-                    class="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
-                    title="Calculer estimation">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                    </svg>
-                  </button>
-                </div>
-                <button
-                  (click)="toggleServiceStatus(service, $event)"
-                  [class.text-green-600]="!service.actif"
-                  [class.hover:bg-green-50]="!service.actif"
-                  [class.text-red-600]="service.actif"
-                  [class.hover:bg-red-50]="service.actif"
-                  class="p-2 rounded transition-colors"
-                  [title]="service.actif ? 'Désactiver' : 'Activer'">
-                  @if (service.actif) {
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  } @else {
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  }
-                </button>
-              </div>
-            </div>
+            <app-service-card
+              [service]="service"
+              [selected]="selectedServices().has(service.id)"
+              (edit)="onCardEdit($event)"
+              (toggle)="onCardToggle($event)"
+              (duplicate)="onCardDuplicate($event)"
+              (estimate)="onCardEstimate($event)"
+              (select)="onCardSelect($event)"
+            />
           }
         </div>
-      } @else {
-        <!-- Vue liste -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+      }
+
+      <!-- Vue liste -->
+      @if (viewMode() === 'list') {
+        <div class="bg-white shadow rounded-lg overflow-hidden">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left">
                 <input
                   type="checkbox"
-                  (change)="selectAllServices()"
                   [checked]="selectedServices().size === displayedServices().length && displayedServices().length > 0"
+                  (click)="selectAllServices()"
                   class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500">
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -342,8 +245,8 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               @for (service of displayedServices(); track service.id) {
-                <tr (click)="viewService(service)" class="hover:bg-gray-50 cursor-pointer">
-                  <td class="px-6 py-4 whitespace-nowrap">
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4">
                     <input
                       type="checkbox"
                       [checked]="selectedServices().has(service.id)"
@@ -351,44 +254,63 @@
                       class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500">
                   </td>
                   <td class="px-6 py-4">
-                    <div>
-                      <div class="text-sm font-medium text-gray-900">{{ service.nom }}</div>
-                      <div class="text-sm text-gray-500 truncate max-w-xs">{{ service.description }}</div>
-                    </div>
+                    <div class="text-sm font-medium text-gray-900">{{ service.nom }}</div>
+                    <div class="text-sm text-gray-500">{{ service.description }}</div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-6 py-4">
                     <span class="text-lg mr-2">{{ getServiceTypeIcon(service.type.value) }}</span>
-                    <span class="text-sm text-gray-900">{{ getServiceTypeLabel(service.type.value) }}</span>
+                    <span class="text-sm text-gray-600">{{ service.type.label }}</span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td class="px-6 py-4 text-sm text-gray-900">
                     @if (service.tarification.tarifHoraire) {
-                      <div>{{ formatPrice(service.tarification.tarifHoraire) }}/h</div>
+                      {{ formatPrice(service.tarification.tarifHoraire) }}/h
                     }
                     @if (service.tarification.tarifFixe) {
-                      <div>{{ formatPrice(service.tarification.tarifFixe) }} (fixe)</div>
+                      {{ formatPrice(service.tarification.tarifFixe) }} fixe
                     }
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-6 py-4">
                     <span
                       [class]="service.actif ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
                       class="px-2 py-1 text-xs font-medium rounded-full">
                       {{ service.actif ? 'Actif' : 'Inactif' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex justify-end space-x-2">
+                  <td class="px-6 py-4 text-right text-sm font-medium">
+                    <div class="flex items-center justify-end space-x-2">
                       <button
                         (click)="editService(service, $event)"
-                        class="text-blue-600 hover:text-blue-900">
-                        Modifier
+                        class="text-blue-600 hover:text-blue-900"
+                        title="Modifier">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="duplicateService(service, $event)"
+                        class="text-gray-600 hover:text-gray-900"
+                        title="Dupliquer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
                       </button>
                       <button
                         (click)="toggleServiceStatus(service, $event)"
-                        [class.text-green-600]="!service.actif"
-                        [class.hover:text-green-900]="!service.actif"
-                        [class.text-red-600]="service.actif"
-                        [class.hover:text-red-900]="service.actif">
-                        {{ service.actif ? 'Désactiver' : 'Activer' }}
+                        [class]="service.actif ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                        [title]="service.actif ? 'Désactiver' : 'Activer'">
+                        @if (service.actif) {
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                          </svg>
+                        } @else {
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        }
                       </button>
                     </div>
                   </td>
@@ -403,43 +325,30 @@
       @if (getTotalPages() > 1) {
         <div class="mt-6 flex items-center justify-between">
           <div class="text-sm text-gray-700">
-            Affichage de
-            <span class="font-medium">{{ (currentPage - 1) * limit + 1 }}</span>
-            à
-            <span class="font-medium">{{ Math.min(currentPage * limit, serviceService.total$()) }}</span>
-            sur
-            <span class="font-medium">{{ serviceService.total$() }}</span>
-            résultats
+            Page {{ currentPage }} sur {{ getTotalPages() }}
           </div>
-
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1">
             <button
               (click)="previousPage()"
               [disabled]="currentPage === 1"
-              class="px-3 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-              </svg>
+              class="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+              Précédent
             </button>
-
             @for (page of getPageNumbers(); track page) {
               <button
                 (click)="goToPage(page)"
                 [class.bg-blue-600]="page === currentPage"
                 [class.text-white]="page === currentPage"
                 [class.hover:bg-gray-50]="page !== currentPage"
-                class="px-4 py-2 border rounded-lg transition-colors">
+                class="px-3 py-1 border rounded-md">
                 {{ page }}
               </button>
             }
-
             <button
               (click)="nextPage()"
               [disabled]="currentPage === getTotalPages()"
-              class="px-3 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
+              class="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+              Suivant
             </button>
           </div>
         </div>

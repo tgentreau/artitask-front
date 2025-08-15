@@ -24,12 +24,21 @@ export class ServiceCardComponent {
     return serviceType?.icon || '📋';
   }
 
-  formatPrice(price?: number): string {
-    if (!price) return '-';
+  formatPrice(price?: number | { amount: number; currency: string }): string {
+    let value: number | undefined;
+
+    if (price && typeof price === 'object' && 'amount' in price) {
+      value = price.amount;
+    } else if (typeof price === 'number') {
+      value = price;
+    }
+
+    if (!value) return '-';
+
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price);
+    }).format(value);
   }
 
   formatMajoration(value: number): string {

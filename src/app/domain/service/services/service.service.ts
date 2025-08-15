@@ -79,7 +79,6 @@ export class ServiceService {
       .set('page', page.toString())
       .set('limit', limit.toString());
 
-    // Ajout des filtres
     if (filters?.type) {
       params = params.set('type', filters.type);
     }
@@ -95,7 +94,10 @@ export class ServiceService {
 
     return this.http.get<ApiResponse<ServiceListResponse>>(this.apiUrl, { params }).pipe(
       tap(response => {
-        this.servicesSignal.set(response.data.items);
+        const transformedItems = response.data.items.map(service =>
+          this.transformServiceData(service)
+        );
+        this.servicesSignal.set(transformedItems);
         this.totalSignal.set(response.data.total);
         this.currentPageSignal.set(response.data.page);
         this.pageSizeSignal.set(response.data.limit);
@@ -113,7 +115,8 @@ export class ServiceService {
 
     return this.http.get<ApiResponse<Service>>(`${this.apiUrl}/${id}`).pipe(
       tap(response => {
-        this.currentServiceSignal.set(response.data);
+        const transformedService = this.transformServiceData(response.data);
+        this.currentServiceSignal.set(transformedService);
         this.loadingSignal.set(false);
       }),
       catchError(error => this.handleError(error))
@@ -397,5 +400,27 @@ export class ServiceService {
       style: 'currency',
       currency: 'EUR'
     }).format(amount);
+  }
+
+  private transformServiceData(service: any): Service {
+    return {
+      ...service,
+      tarification: {
+        tarifHoraire: typeof service.tarification.tarifHoraire === 'object'
+          ? service.tarification.tarifHoraire?.amount
+          : service.tarification.tarifHoraire,
+
+        tarifFixe: typeof service.tarification.tarifFixe === 'object'
+          ? service.tarification.tarifFixe?.amount
+          : service.tarification.tarifFixe,
+
+        majorationUrgence: service.tarification.majorationUrgence || 1,
+        majorationWeekend: service.tarification.majorationWeekend || 1,
+
+        fraisDeplacement: typeof service.tarification.fraisDeplacement === 'object'
+          ? service.tarification.fraisDeplacement?.amount
+          : service.tarification.fraisDeplacement
+      }
+    };
   }
 }

@@ -5,12 +5,13 @@ import { Router } from '@angular/router';
 import { ServiceService } from '../../services/service.service';
 import { Service, ServiceFilters } from '../../models/service.model';
 import { SERVICE_TYPES, STATUS_COLORS } from '../../models/service.constants';
-import {NotificationService} from "../../../../shared/services/notification.service";
+import { NotificationService } from "../../../../shared/services/notification.service";
+import { ServiceCardComponent } from '../service-card/service-card.component';
 
 @Component({
   selector: 'app-service-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ServiceCardComponent],
   templateUrl: './service-list.component.html'
 })
 export class ServiceListComponent implements OnInit {
@@ -34,6 +35,7 @@ export class ServiceListComponent implements OnInit {
   statusColors = STATUS_COLORS;
 
   private searchResults = signal<Service[]>([]);
+
   ngOnInit(): void {
     this.loadServices();
   }
@@ -120,7 +122,6 @@ export class ServiceListComponent implements OnInit {
 
   duplicateService(service: Service, event: Event): void {
     event.stopPropagation();
-    // Créer une copie du service
     const newService = {
       nom: `${service.nom} (copie)`,
       description: service.description,
@@ -149,6 +150,26 @@ export class ServiceListComponent implements OnInit {
   calculateEstimate(service: Service, event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/services', service.id, 'estimate']);
+  }
+
+  onCardEdit(service: Service): void {
+    this.editService(service, new Event('click'));
+  }
+
+  onCardToggle(service: Service): void {
+    this.toggleServiceStatus(service, new Event('click'));
+  }
+
+  onCardDuplicate(service: Service): void {
+    this.duplicateService(service, new Event('click'));
+  }
+
+  onCardEstimate(service: Service): void {
+    this.calculateEstimate(service, new Event('click'));
+  }
+
+  onCardSelect(serviceId: string): void {
+    this.toggleServiceSelection(serviceId, new Event('click'));
   }
 
   toggleViewMode(): void {
@@ -203,6 +224,10 @@ export class ServiceListComponent implements OnInit {
       });
       this.selectedServices.set(new Set());
     }
+  }
+
+  clearSelection(): void {
+    this.selectedServices.set(new Set());
   }
 
   displayedServices(): Service[] {
@@ -263,23 +288,8 @@ export class ServiceListComponent implements OnInit {
     }).format(price);
   }
 
-  formatMajoration(majoration: number): string {
-    return `+${Math.round((majoration - 1) * 100)}%`;
-  }
-
   getServiceTypeIcon(type: string): string {
     const serviceType = this.serviceTypes.find(t => t.value === type);
     return serviceType?.icon || '📋';
   }
-
-  getServiceTypeLabel(type: string): string {
-    const serviceType = this.serviceTypes.find(t => t.value === type);
-    return serviceType?.label || type;
-  }
-
-  clearSelection(): void {
-    this.selectedServices.set(new Set());
-  }
-
-  protected Math = Math;
 }
