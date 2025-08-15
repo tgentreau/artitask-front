@@ -94,15 +94,6 @@ export interface ServiceListResponse {
 }
 
 /**
- * Structure de réponse standard du backend
- */
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-}
-
-/**
  * Filtres pour la recherche de services
  */
 export interface ServiceFilters {

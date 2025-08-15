@@ -7,8 +7,8 @@ import {
   CreateClientRequest,
   UpdateClientRequest,
   ClientListResponse,
-  ApiResponse
 } from '../models/client.model';
+import {ApiResponse} from "../../../shared/models/api-error-response.interface";
 
 @Injectable({
   providedIn: 'root'
@@ -17,19 +17,22 @@ export class ClientService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/clients`;
 
-  // Signals pour état réactif
   private clientsSignal = signal<Client[]>([]);
   private loadingSignal = signal(false);
   private totalSignal = signal(0);
   private currentPageSignal = signal(1);
 
-  // Computed pour accès public
   clients = computed(() => this.clientsSignal());
   loading = computed(() => this.loadingSignal());
   total = computed(() => this.totalSignal());
   currentPage = computed(() => this.currentPageSignal());
 
-  getClients(page = 1, limit = 20, sortBy?: string, sortOrder?: 'ASC' | 'DESC'): Observable<ClientListResponse> {
+  getClients(
+    page = 1,
+    limit = 20,
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC'
+  ): Observable<ClientListResponse> {
     this.loadingSignal.set(true);
 
     let params = new HttpParams()
@@ -87,7 +90,6 @@ export class ClientService {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
       map(() => void 0),
       tap(() => {
-        // Supprimer localement
         const clients = this.clientsSignal().filter(c => c.id !== id);
         this.clientsSignal.set(clients);
         this.totalSignal.update(t => t - 1);

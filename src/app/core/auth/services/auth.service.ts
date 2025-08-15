@@ -7,13 +7,13 @@ import {
   LoginRequest,
   RegisterRequest,
   RefreshTokenRequest,
-  ApiResponse,
   AuthResponse,
   ArtisanResponse,
   RegisterResponse,
   User,
   DecodedToken
 } from '../models/auth.model';
+import {ApiResponse} from "../../../shared/models/api-error-response.interface";
 
 @Injectable({
   providedIn: 'root'

@@ -28,7 +28,12 @@ export class ClientListComponent implements OnInit {
   }
 
   loadClients() {
-    this.clientService.getClients(this.currentPage, this.limit, this.sortBy, this.sortOrder).subscribe();
+    this.clientService.getClients(
+      this.currentPage,
+      this.limit,
+      this.sortBy,
+      this.sortOrder
+    ).subscribe();
   }
 
   displayedClients() {
@@ -98,5 +103,6 @@ export class ClientListComponent implements OnInit {
       });
     }
   }
+
   protected Math = Math;
 }

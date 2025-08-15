@@ -1,5 +1,3 @@
-// src/app/domain/service/services/service.service.ts
-
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -12,10 +10,10 @@ import {
   CalculateEstimateRequest,
   EstimateResponse,
   ServiceListResponse,
-  ApiResponse,
   ServiceFilters
 } from '../models/service.model';
 import {NotificationService} from "../../../shared/services/notification.service";
+import {ApiResponse} from "../../../shared/models/api-error-response.interface";
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +23,6 @@ export class ServiceService {
   private notificationService = inject(NotificationService);
   private apiUrl = `${environment.apiUrl}/services`;
 
-  // Signals pour la gestion de l'état
   private servicesSignal = signal<Service[]>([]);
   private currentServiceSignal = signal<Service | null>(null);
   private loadingSignal = signal(false);
@@ -34,7 +31,6 @@ export class ServiceService {
   private currentPageSignal = signal(1);
   private pageSizeSignal = signal(20);
 
-  // Computed signals pour l'accès en lecture
   services$ = computed(() => this.servicesSignal());
   currentService$ = computed(() => this.currentServiceSignal());
   loading$ = computed(() => this.loadingSignal());
@@ -43,7 +39,6 @@ export class ServiceService {
   currentPage$ = computed(() => this.currentPageSignal());
   totalPages$ = computed(() => Math.ceil(this.totalSignal() / this.pageSizeSignal()));
 
-  // Computed signals pour les filtres
   activeServices$ = computed(() =>
     this.servicesSignal().filter(s => s.actif)
   );

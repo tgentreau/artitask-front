@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import {AuthService} from "../../services/auth.service";
+import { AuthService } from '../../services/auth.service';
+import { FormErrorHandler } from '../../../../shared/utils/form-error-handler';
+import {ApiErrorResponse, getErrorMessage} from "../../../../shared/models/api-error-response.interface";
 
 @Component({
   selector: 'app-login',
@@ -30,34 +32,53 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.errorMessage.set('');
-      const { email, password, rememberMe } = this.loginForm.value;
-
-      this.authService.login({ email, password }).subscribe({
-        next: () => {
-          if (rememberMe) {
-            localStorage.setItem('rememberMe', 'true');
-          }
-          this.notificationService.success('Connexion réussie', 'Bienvenue dans votre espace artisan');
-          this.router.navigate(['/dashboard']);
-        },
-        error: (error) => {
-          if (error.status === 401) {
-            this.errorMessage.set('Email ou mot de passe incorrect');
-            this.notificationService.error('Échec de connexion', 'Vérifiez vos identifiants');
-          } else if (error.status === 0) {
-            this.errorMessage.set('Impossible de se connecter au serveur');
-            this.notificationService.showHttpError(error);
-          } else {
-            this.errorMessage.set(error.message || 'Une erreur est survenue');
-            this.notificationService.showHttpError(error);
-          }
-        }
-      });
-    } else {
-      this.markFormGroupTouched(this.loginForm);
+    if (!this.loginForm.valid) {
+      FormErrorHandler.markAllAsTouched(this.loginForm);
       this.notificationService.warning('Formulaire invalide', 'Veuillez remplir tous les champs requis');
+      return;
+    }
+
+    this.errorMessage.set('');
+    FormErrorHandler.clearBackendErrors(this.loginForm);
+
+    const { email, password, rememberMe } = this.loginForm.value;
+
+    this.authService.login({ email, password }).subscribe({
+      next: () => {
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+        }
+        this.notificationService.success('Connexion réussie', 'Bienvenue dans votre espace artisan');
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error: ApiErrorResponse) => {
+        this.handleLoginError(error);
+      }
+    });
+  }
+
+  private handleLoginError(error: ApiErrorResponse): void {
+    const message = getErrorMessage(error);
+    this.errorMessage.set(message);
+
+    FormErrorHandler.applyBackendErrors(this.loginForm, error);
+
+    switch (error.statusCode) {
+      case 401:
+        this.notificationService.error('Échec de connexion', 'Email ou mot de passe incorrect');
+        break;
+      case 400:
+        if (error.errors?.length) {
+          this.notificationService.error('Données invalides', 'Veuillez vérifier les champs du formulaire');
+        } else {
+          this.notificationService.error('Erreur', message);
+        }
+        break;
+      case 0:
+        this.notificationService.error('Connexion impossible', 'Le serveur est inaccessible');
+        break;
+      default:
+        this.notificationService.error('Erreur', message);
     }
   }
 
@@ -65,10 +86,11 @@ export class LoginComponent {
     this.showPassword.set(!this.showPassword());
   }
 
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
-    });
+  getFieldError(fieldName: string): string | null {
+    return FormErrorHandler.getFieldError(this.loginForm, fieldName);
+  }
+
+  hasFieldError(fieldName: string): boolean {
+    return FormErrorHandler.hasFieldError(this.loginForm, fieldName);
   }
 }

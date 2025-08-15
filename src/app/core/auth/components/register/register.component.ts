@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import {AuthService} from "../../services/auth.service";
+import { AuthService } from '../../services/auth.service';
+import { FormErrorHandler } from '../../../../shared/utils/form-error-handler';
+import {ApiErrorResponse, getErrorMessage} from "../../../../shared/models/api-error-response.interface";
 
 @Component({
   selector: 'app-register',
@@ -37,59 +39,75 @@ export class RegisterComponent {
   }
 
   onSubmit(): void {
-    if (this.registerForm.valid) {
-      this.errorMessage.set('');
-      this.successMessage.set('');
+    if (!this.registerForm.valid) {
+      FormErrorHandler.markAllAsTouched(this.registerForm);
+      this.notificationService.warning('Formulaire invalide', 'Veuillez remplir tous les champs requis');
+      return;
+    }
 
-      const { confirmPassword, acceptTerms, ...registerData } = this.registerForm.value;
+    this.clearMessages();
+    const { confirmPassword, acceptTerms, ...registerData } = this.registerForm.value;
 
-      this.authService.registerAndLogin(registerData).subscribe({
-        next: () => {
-          this.successMessage.set('Inscription réussie ! Connexion en cours...');
-          this.notificationService.success(
-            'Compte créé avec succès',
-            'Vous allez être redirigé vers votre tableau de bord'
-          );
-          setTimeout(() => {
-            this.router.navigate(['/dashboard']);
-          }, 1500);
-        },
-        error: (error) => {
-          if (error.status === 409) {
-            this.errorMessage.set('Cet email est déjà utilisé');
-            this.notificationService.error('Email déjà utilisé', 'Utilisez un autre email ou connectez-vous');
-          } else if (error.status === 400) {
-            this.errorMessage.set(error.error?.message || 'Données invalides');
-            this.notificationService.error('Données invalides', 'Vérifiez les informations saisies');
-          } else {
-            this.errorMessage.set(error.message || 'Erreur lors de l\'inscription');
-            this.notificationService.showHttpError(error);
-          }
+    this.authService.registerAndLogin(registerData).subscribe({
+      next: (response) => {
+        this.successMessage.set('Inscription réussie ! Redirection en cours...');
+        this.notificationService.success('Bienvenue !', 'Votre compte a été créé avec succès');
+      },
+      error: (error: ApiErrorResponse) => {
+        this.handleRegistrationError(error);
+      }
+    });
+  }
+
+  private handleRegistrationError(error: ApiErrorResponse): void {
+    const message = getErrorMessage(error);
+    this.errorMessage.set(message);
+
+    FormErrorHandler.applyBackendErrors(this.registerForm, error);
+
+    switch (error.statusCode) {
+      case 400:
+        if (error.errors?.length) {
+          this.notificationService.error('Données invalides', 'Veuillez corriger les erreurs dans le formulaire');
+        } else {
+          this.notificationService.error('Erreur de validation', message);
         }
-      });
-    } else {
-      this.markFormGroupTouched(this.registerForm);
-      this.notificationService.warning('Formulaire incomplet', 'Veuillez remplir tous les champs obligatoires');
+        break;
+
+      case 409:
+        this.notificationService.error('Compte existant', 'Un compte existe déjà avec cet email');
+        this.registerForm.get('email')?.setErrors({
+          backend: ['Cet email est déjà utilisé']
+        });
+        break;
+
+      case 422:
+        this.notificationService.warning('Règle métier', message);
+        break;
+
+      case 0:
+        this.notificationService.error('Connexion impossible', 'Le serveur est inaccessible');
+        break;
+
+      default:
+        this.notificationService.error('Erreur', message);
     }
   }
 
-  togglePassword(): void {
-    this.showPassword.set(!this.showPassword());
-  }
-
-  toggleConfirmPassword(): void {
-    this.showConfirmPassword.set(!this.showConfirmPassword());
+  private clearMessages(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    FormErrorHandler.clearBackendErrors(this.registerForm);
   }
 
   getPasswordStrength(): { level: number; text: string } {
     const password = this.registerForm.get('password')?.value || '';
 
-    if (password.length === 0) {
+    if (!password) {
       return { level: 0, text: '' };
     }
 
     let strength = 0;
-
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
@@ -107,8 +125,9 @@ export class RegisterComponent {
     return levels[Math.min(strength - 1, 4)] || levels[0];
   }
 
-  formatPhoneNumber(event: any): void {
-    let value = event.target.value.replace(/\D/g, '');
+  formatPhoneNumber(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, '');
 
     if (value.length > 10) {
       value = value.substring(0, 10);
@@ -127,12 +146,13 @@ export class RegisterComponent {
       value = value.substring(0, 11) + ' ' + value.substring(11);
     }
 
-    event.target.value = value;
-    this.registerForm.get('telephone')?.setValue(value.replace(/\s/g, ''));
+    input.value = value;
+    this.registerForm.get('telephone')?.setValue(value.replace(/\s/g, ''), { emitEvent: false });
   }
 
-  formatSiret(event: any): void {
-    let value = event.target.value.replace(/\D/g, '');
+  formatSiret(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, '');
 
     if (value.length > 14) {
       value = value.substring(0, 14);
@@ -148,27 +168,29 @@ export class RegisterComponent {
       value = value.substring(0, 11) + ' ' + value.substring(11);
     }
 
-    event.target.value = value;
-    this.registerForm.get('siret')?.setValue(value.replace(/\s/g, ''));
+    input.value = value;
+    this.registerForm.get('siret')?.setValue(value.replace(/\s/g, ''), { emitEvent: false });
   }
 
-  private passwordMatchValidator(control: AbstractControl): { [key: string]: boolean } | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
+  togglePassword(): void {
+    this.showPassword.set(!this.showPassword());
+  }
 
-    if (!password || !confirmPassword) {
-      return null;
-    }
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword.set(!this.showConfirmPassword());
+  }
 
-    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+  getFieldError(fieldName: string): string | null {
+    return FormErrorHandler.getFieldError(this.registerForm, fieldName);
+  }
+
+  hasFieldError(fieldName: string): boolean {
+    return FormErrorHandler.hasFieldError(this.registerForm, fieldName);
   }
 
   private passwordStrengthValidator(control: AbstractControl): { [key: string]: boolean } | null {
     const value = control.value;
-
-    if (!value) {
-      return null;
-    }
+    if (!value) return null;
 
     const hasNumber = /[0-9]/.test(value);
     const hasUpper = /[A-Z]/.test(value);
@@ -176,18 +198,20 @@ export class RegisterComponent {
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
 
     const valid = hasNumber && hasUpper && hasLower && hasSpecial;
-
     return valid ? null : { weakPassword: true };
   }
 
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
+  private passwordMatchValidator(formGroup: AbstractControl): { [key: string]: boolean } | null {
+    const password = formGroup.get('password');
+    const confirmPassword = formGroup.get('confirmPassword');
 
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      }
-    });
+    if (!password || !confirmPassword) return null;
+
+    if (confirmPassword.value && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+
+    return null;
   }
 }

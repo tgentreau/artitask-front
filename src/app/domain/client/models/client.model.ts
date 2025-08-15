@@ -32,9 +32,3 @@ export interface ClientListResponse {
   limit: number;
   totalPages: number;
 }
-
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-}

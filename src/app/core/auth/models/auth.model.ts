@@ -25,16 +25,6 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-
-/**
- * Structure standard de réponse backend
- */
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-}
-
 /**
  * ArtisanResponseDto backend
  */
