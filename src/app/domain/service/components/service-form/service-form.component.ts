@@ -4,8 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractContro
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ServiceService } from '../../services/service.service';
 import { SERVICE_TYPES, DEFAULT_MAJORATIONS, DEFAULT_TARIFS, SERVICE_VALIDATION_MESSAGES } from '../../models/service.constants';
-import {CreateServiceRequest, Service, UpdateServiceRequest} from '../../models/service.model';
-import {NotificationService} from "../../../../shared/services/notification.service";
+import { CreateServiceRequest, Service, UpdateServiceRequest } from '../../models/service.model';
+import { NotificationService } from "../../../../shared/services/notification.service";
 
 @Component({
   selector: 'app-service-form',
@@ -60,11 +60,14 @@ export class ServiceFormComponent implements OnInit {
         Validators.max(3)
       ]],
       fraisDeplacement: [null, [Validators.min(0), Validators.max(500)]]
-    }, { validators: this.tarifValidator });
+    }, { validators: this.tarifExclusiveValidator });
 
     this.serviceForm.get('type')?.valueChanges.subscribe(type => {
       this.onTypeChange(type);
     });
+
+    // S'assurer qu'au démarrage, seul le mode horaire a une valeur
+    this.toggleTarifMode('hourly');
   }
 
   ngOnInit(): void {
@@ -120,19 +123,19 @@ export class ServiceFormComponent implements OnInit {
     if (!type || this.isEditMode) return;
 
     const defaults = this.defaultTarifs[type];
+    if (!defaults) return;
 
-    if (defaults) {
-      if ('horaire' in defaults && this.tarifMode() === 'hourly') {
-        this.serviceForm.patchValue({
-          tarifHoraire: defaults.horaire,
-          fraisDeplacement: defaults.deplacement
-        });
-      } else if ('fixe' in defaults && this.tarifMode() === 'fixed') {
-        this.serviceForm.patchValue({
-          tarifFixe: defaults.fixe,
-          fraisDeplacement: defaults.deplacement
-        });
-      }
+    // Ne mettre à jour que le tarif correspondant au mode actuel
+    if (this.tarifMode() === 'hourly' && 'horaire' in defaults) {
+      this.serviceForm.patchValue({
+        tarifHoraire: defaults.horaire,
+        fraisDeplacement: defaults.deplacement
+      });
+    } else if (this.tarifMode() === 'fixed' && 'fixe' in defaults) {
+      this.serviceForm.patchValue({
+        tarifFixe: defaults.fixe,
+        fraisDeplacement: defaults.deplacement
+      });
     }
   }
 
@@ -140,23 +143,47 @@ export class ServiceFormComponent implements OnInit {
     this.tarifMode.set(mode);
 
     if (mode === 'hourly') {
-      const typeValue = this.serviceForm.get('type')?.value;
-      const defaults = typeValue ? this.defaultTarifs[typeValue] : null;
+      // Forcer le tarif fixe à null SANS valeur par défaut
+      this.serviceForm.get('tarifFixe')?.setValue(null);
+      this.serviceForm.get('tarifFixe')?.clearValidators();
+      this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
 
-      this.serviceForm.patchValue({
-        tarifFixe: null,
-        tarifHoraire: this.serviceForm.get('tarifHoraire')?.value ||
-          (defaults && 'horaire' in defaults ? defaults.horaire : 45)
-      });
+      // Définir le tarif horaire avec valeur par défaut si vide
+      const currentHoraire = this.serviceForm.get('tarifHoraire')?.value;
+      if (!currentHoraire) {
+        const typeValue = this.serviceForm.get('type')?.value;
+        const defaults = typeValue ? this.defaultTarifs[typeValue] : null;
+        const defaultValue = (defaults && 'horaire' in defaults) ? defaults.horaire : 45;
+        this.serviceForm.get('tarifHoraire')?.setValue(defaultValue);
+      }
+
+      this.serviceForm.get('tarifHoraire')?.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(1000)
+      ]);
+      this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
     } else {
-      const typeValue = this.serviceForm.get('type')?.value;
-      const defaults = typeValue ? this.defaultTarifs[typeValue] : null;
+      // Forcer le tarif horaire à null SANS valeur par défaut
+      this.serviceForm.get('tarifHoraire')?.setValue(null);
+      this.serviceForm.get('tarifHoraire')?.clearValidators();
+      this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
 
-      this.serviceForm.patchValue({
-        tarifHoraire: null,
-        tarifFixe: this.serviceForm.get('tarifFixe')?.value ||
-          (defaults && 'fixe' in defaults ? defaults.fixe : 150)
-      });
+      // Définir le tarif fixe avec valeur par défaut si vide
+      const currentFixe = this.serviceForm.get('tarifFixe')?.value;
+      if (!currentFixe) {
+        const typeValue = this.serviceForm.get('type')?.value;
+        const defaults = typeValue ? this.defaultTarifs[typeValue] : null;
+        const defaultValue = (defaults && 'fixe' in defaults) ? defaults.fixe : 150;
+        this.serviceForm.get('tarifFixe')?.setValue(defaultValue);
+      }
+
+      this.serviceForm.get('tarifFixe')?.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(10000)
+      ]);
+      this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
     }
 
     this.serviceForm.updateValueAndValidity();
@@ -177,10 +204,13 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
-    if (this.tarifMode() === 'hourly' && formValue.tarifHoraire) {
+    // S'assurer qu'on n'envoie QU'UN SEUL type de tarif
+    if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
-    } else if (formValue.tarifFixe) {
+      // PAS de tarifFixe même si il y a une valeur dans le form
+    } else {
       data.tarifFixe = formValue.tarifFixe;
+      // PAS de tarifHoraire même si il y a une valeur dans le form
     }
 
     if (formValue.fraisDeplacement) {
@@ -201,10 +231,13 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
-    if (this.tarifMode() === 'hourly' && formValue.tarifHoraire !== null) {
+    // S'assurer qu'on n'envoie QU'UN SEUL type de tarif
+    if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
-    } else if (formValue.tarifFixe !== null) {
+      data.tarifFixe = undefined;
+    } else {
       data.tarifFixe = formValue.tarifFixe;
+      data.tarifHoraire = undefined;
     }
 
     if (formValue.fraisDeplacement !== null) {
@@ -217,10 +250,16 @@ export class ServiceFormComponent implements OnInit {
   onSubmit(): void {
     if (this.serviceForm.invalid) {
       this.markFormTouched();
-      this.notificationService.warning(
-        'Formulaire invalide',
-        'Veuillez corriger les erreurs avant de continuer'
-      );
+
+      const tarifError = this.getFormError();
+      if (tarifError) {
+        this.notificationService.error('Erreur de tarification', tarifError);
+      } else {
+        this.notificationService.warning(
+          'Formulaire invalide',
+          'Veuillez corriger les erreurs avant de continuer'
+        );
+      }
       return;
     }
 
@@ -251,7 +290,7 @@ export class ServiceFormComponent implements OnInit {
         next: () => {
           this.notificationService.success(
             'Service créé',
-            'Le service a été créé avec succès'
+            'Le nouveau service a été ajouté avec succès'
           );
           this.router.navigate(['/services']);
         },
@@ -267,6 +306,10 @@ export class ServiceFormComponent implements OnInit {
     }
   }
 
+  cancel(): void {
+    this.router.navigate(['/services']);
+  }
+
   hasError(field: string): boolean {
     const control = this.serviceForm.get(field);
     return !!(control && control.invalid && (control.dirty || control.touched));
@@ -278,7 +321,6 @@ export class ServiceFormComponent implements OnInit {
 
     const errors = control.errors;
 
-    // Messages directs pour nom, description et type
     if (field === 'nom') {
       if (errors['required']) return this.validationMessages.nom.required;
       if (errors['minlength']) return this.validationMessages.nom.minlength;
@@ -295,25 +337,32 @@ export class ServiceFormComponent implements OnInit {
       if (errors['required']) return this.validationMessages.type.required;
     }
 
-    // Messages pour les tarifs
     if (field === 'tarifHoraire' || field === 'tarifFixe') {
+      if (errors['required']) return 'Ce tarif est requis pour le mode sélectionné';
       if (errors['min']) return this.validationMessages.tarif.min;
       if (errors['max']) return this.validationMessages.tarif.max;
-      if (errors['tarifRequired']) return this.validationMessages.tarif.required;
     }
 
-    // Messages pour les majorations
     if (field === 'majorationUrgence' || field === 'majorationWeekend') {
       if (errors['min']) return this.validationMessages.majoration.min;
       if (errors['max']) return this.validationMessages.majoration.max;
     }
 
-    // Messages pour frais de déplacement
     if (field === 'fraisDeplacement') {
       if (errors['min']) return this.validationMessages.fraisDeplacement.min;
     }
 
     return 'Erreur de validation';
+  }
+
+  getFormError(): string | null {
+    if (this.serviceForm.errors?.['tarifRequired']) {
+      return this.validationMessages.tarif.required;
+    }
+    if (this.serviceForm.errors?.['tarifConflict']) {
+      return this.validationMessages.tarif.conflict;
+    }
+    return null;
   }
 
   getTypeDescription(type: string): string {
@@ -326,12 +375,16 @@ export class ServiceFormComponent implements OnInit {
     return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
   }
 
-  private tarifValidator(control: AbstractControl): ValidationErrors | null {
+  private tarifExclusiveValidator(control: AbstractControl): ValidationErrors | null {
     const tarifHoraire = control.get('tarifHoraire')?.value;
     const tarifFixe = control.get('tarifFixe')?.value;
 
     if (!tarifHoraire && !tarifFixe) {
       return { tarifRequired: true };
+    }
+
+    if (tarifHoraire && tarifFixe) {
+      return { tarifConflict: true };
     }
 
     return null;
