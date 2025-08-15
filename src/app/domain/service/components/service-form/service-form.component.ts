@@ -142,13 +142,15 @@ export class ServiceFormComponent implements OnInit {
   toggleTarifMode(mode: 'hourly' | 'fixed'): void {
     this.tarifMode.set(mode);
 
+    // IMPORTANT : Nettoyer COMPLÈTEMENT l'autre tarif
     if (mode === 'hourly') {
-      // Forcer le tarif fixe à null SANS valeur par défaut
+      this.serviceForm.get('tarifFixe')?.reset();
       this.serviceForm.get('tarifFixe')?.setValue(null);
       this.serviceForm.get('tarifFixe')?.clearValidators();
+      this.serviceForm.get('tarifFixe')?.disable(); // DÉSACTIVER le champ
       this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
 
-      // Définir le tarif horaire avec valeur par défaut si vide
+      this.serviceForm.get('tarifHoraire')?.enable();
       const currentHoraire = this.serviceForm.get('tarifHoraire')?.value;
       if (!currentHoraire) {
         const typeValue = this.serviceForm.get('type')?.value;
@@ -156,7 +158,6 @@ export class ServiceFormComponent implements OnInit {
         const defaultValue = (defaults && 'horaire' in defaults) ? defaults.horaire : 45;
         this.serviceForm.get('tarifHoraire')?.setValue(defaultValue);
       }
-
       this.serviceForm.get('tarifHoraire')?.setValidators([
         Validators.required,
         Validators.min(1),
@@ -164,12 +165,13 @@ export class ServiceFormComponent implements OnInit {
       ]);
       this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
     } else {
-      // Forcer le tarif horaire à null SANS valeur par défaut
+      this.serviceForm.get('tarifHoraire')?.reset();
       this.serviceForm.get('tarifHoraire')?.setValue(null);
       this.serviceForm.get('tarifHoraire')?.clearValidators();
+      this.serviceForm.get('tarifHoraire')?.disable(); // DÉSACTIVER le champ
       this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
 
-      // Définir le tarif fixe avec valeur par défaut si vide
+      this.serviceForm.get('tarifFixe')?.enable();
       const currentFixe = this.serviceForm.get('tarifFixe')?.value;
       if (!currentFixe) {
         const typeValue = this.serviceForm.get('type')?.value;
@@ -177,7 +179,6 @@ export class ServiceFormComponent implements OnInit {
         const defaultValue = (defaults && 'fixe' in defaults) ? defaults.fixe : 150;
         this.serviceForm.get('tarifFixe')?.setValue(defaultValue);
       }
-
       this.serviceForm.get('tarifFixe')?.setValidators([
         Validators.required,
         Validators.min(1),
@@ -194,7 +195,7 @@ export class ServiceFormComponent implements OnInit {
   }
 
   prepareCreateData(): CreateServiceRequest {
-    const formValue = this.serviceForm.value;
+    const formValue = this.serviceForm.getRawValue();
 
     const data: CreateServiceRequest = {
       nom: formValue.nom,
@@ -204,13 +205,10 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
-    // S'assurer qu'on n'envoie QU'UN SEUL type de tarif
     if (this.tarifMode() === 'hourly') {
-      data.tarifHoraire = formValue.tarifHoraire;
-      // PAS de tarifFixe même si il y a une valeur dans le form
+      data.tarifHoraire = formValue.tarifHoraire || null;
     } else {
-      data.tarifFixe = formValue.tarifFixe;
-      // PAS de tarifHoraire même si il y a une valeur dans le form
+      data.tarifFixe = formValue.tarifFixe || null;
     }
 
     if (formValue.fraisDeplacement) {
@@ -231,16 +229,15 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
-    // S'assurer qu'on n'envoie QU'UN SEUL type de tarif
     if (this.tarifMode() === 'hourly') {
-      data.tarifHoraire = formValue.tarifHoraire;
+      data.tarifHoraire = formValue.tarifHoraire || null;
       data.tarifFixe = undefined;
     } else {
-      data.tarifFixe = formValue.tarifFixe;
+      data.tarifFixe = formValue.tarifFixe || null;
       data.tarifHoraire = undefined;
     }
 
-    if (formValue.fraisDeplacement !== null) {
+    if (formValue.fraisDeplacement !== null && formValue.fraisDeplacement !== undefined) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
@@ -379,11 +376,14 @@ export class ServiceFormComponent implements OnInit {
     const tarifHoraire = control.get('tarifHoraire')?.value;
     const tarifFixe = control.get('tarifFixe')?.value;
 
-    if (!tarifHoraire && !tarifFixe) {
+    const hasHoraire = tarifHoraire !== null && tarifHoraire !== undefined;
+    const hasFixe = tarifFixe !== null && tarifFixe !== undefined;
+
+    if (!hasHoraire && !hasFixe) {
       return { tarifRequired: true };
     }
 
-    if (tarifHoraire && tarifFixe) {
+    if (hasHoraire && hasFixe) {
       return { tarifConflict: true };
     }
 
