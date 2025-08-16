@@ -8,7 +8,7 @@
         </h1>
         <button
           type="button"
-          [routerLink]="['/services']"
+          (click)="onCancel()"
           class="text-gray-500 hover:text-gray-700">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -37,10 +37,10 @@
               type="text"
               id="nom"
               formControlName="nom"
-              [class.border-red-500]="hasError('nom')"
+              [class.border-red-500]="serviceForm.get('nom')?.invalid && serviceForm.get('nom')?.touched"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ex: Réparation fuite d'eau">
-            @if (hasError('nom')) {
+            @if (serviceForm.get('nom')?.invalid && serviceForm.get('nom')?.touched) {
               <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('nom') }}</p>
             }
           </div>
@@ -54,10 +54,10 @@
               id="description"
               formControlName="description"
               rows="3"
-              [class.border-red-500]="hasError('description')"
+              [class.border-red-500]="serviceForm.get('description')?.invalid && serviceForm.get('description')?.touched"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="Décrivez le service en détail..."></textarea>
-            @if (hasError('description')) {
+            @if (serviceForm.get('description')?.invalid && serviceForm.get('description')?.touched) {
               <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('description') }}</p>
             }
           </div>
@@ -70,7 +70,7 @@
             <select
               id="type"
               formControlName="type"
-              [class.border-red-500]="hasError('type')"
+              [class.border-red-500]="serviceForm.get('type')?.invalid && serviceForm.get('type')?.touched"
               [class.bg-gray-100]="isEditMode"
               [class.cursor-not-allowed]="isEditMode"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -81,17 +81,12 @@
                 </option>
               }
             </select>
-            @if (hasError('type')) {
+            @if (serviceForm.get('type')?.invalid && serviceForm.get('type')?.touched) {
               <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('type') }}</p>
             }
             @if (isEditMode) {
               <p class="mt-1 text-sm text-gray-500 italic">
                 Le type de service ne peut pas être modifié après création
-              </p>
-            }
-            @if (serviceForm.get('type')?.value && !isEditMode) {
-              <p class="mt-1 text-sm text-gray-500">
-                {{ getTypeDescription(serviceForm.get('type')?.value) }}
               </p>
             }
           </div>
@@ -152,12 +147,12 @@
                   step="0.01"
                   min="0"
                   max="1000"
-                  [class.border-red-500]="hasError('tarifHoraire')"
+                  [class.border-red-500]="serviceForm.get('tarifHoraire')?.invalid && serviceForm.get('tarifHoraire')?.touched"
                   class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="45">
                 <span class="absolute right-3 top-2.5 text-gray-500">€</span>
               </div>
-              @if (hasError('tarifHoraire')) {
+              @if (serviceForm.get('tarifHoraire')?.invalid && serviceForm.get('tarifHoraire')?.touched) {
                 <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifHoraire') }}</p>
               }
             </div>
@@ -177,12 +172,12 @@
                   step="0.01"
                   min="0"
                   max="10000"
-                  [class.border-red-500]="hasError('tarifFixe')"
+                  [class.border-red-500]="serviceForm.get('tarifFixe')?.invalid && serviceForm.get('tarifFixe')?.touched"
                   class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="150">
                 <span class="absolute right-3 top-2.5 text-gray-500">€</span>
               </div>
-              @if (hasError('tarifFixe')) {
+              @if (serviceForm.get('tarifFixe')?.invalid && serviceForm.get('tarifFixe')?.touched) {
                 <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('tarifFixe') }}</p>
               }
             </div>
@@ -201,12 +196,12 @@
                 step="0.01"
                 min="0"
                 max="500"
-                [class.border-red-500]="hasError('fraisDeplacement')"
+                [class.border-red-500]="serviceForm.get('fraisDeplacement')?.invalid && serviceForm.get('fraisDeplacement')?.touched"
                 class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="0">
               <span class="absolute right-3 top-2.5 text-gray-500">€</span>
             </div>
-            @if (hasError('fraisDeplacement')) {
+            @if (serviceForm.get('fraisDeplacement')?.invalid && serviceForm.get('fraisDeplacement')?.touched) {
               <p class="mt-1 text-sm text-red-600">{{ getErrorMessage('fraisDeplacement') }}</p>
             }
           </div>
@@ -245,7 +240,7 @@
                       step="0.1"
                       class="flex-1">
                     <span class="text-sm font-medium text-gray-900 w-16 text-right">
-                      {{ formatMajorationDisplay(serviceForm.get('majorationUrgence')?.value || 1) }}
+                      {{ serviceForm.get('majorationUrgence')?.value ? '+' + Math.round((serviceForm.get('majorationUrgence')!.value - 1) * 100) + '%' : '+0%' }}
                     </span>
                   </div>
                 </div>
@@ -265,7 +260,7 @@
                       step="0.1"
                       class="flex-1">
                     <span class="text-sm font-medium text-gray-900 w-16 text-right">
-                      {{ formatMajorationDisplay(serviceForm.get('majorationWeekend')?.value || 1) }}
+                      {{ serviceForm.get('majorationWeekend')?.value ? '+' + Math.round((serviceForm.get('majorationWeekend')!.value - 1) * 100) + '%' : '+0%' }}
                     </span>
                   </div>
                 </div>
@@ -279,15 +274,15 @@
       <div class="mt-6 flex justify-end space-x-3">
         <button
           type="button"
-          [routerLink]="['/services']"
+          (click)="onCancel()"
           class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
           Annuler
         </button>
         <button
           type="submit"
-          [disabled]="serviceForm.invalid || isSubmitting()"
+          [disabled]="serviceForm.invalid || loading()"
           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-          @if (isSubmitting()) {
+          @if (loading()) {
             <svg class="inline-block w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>

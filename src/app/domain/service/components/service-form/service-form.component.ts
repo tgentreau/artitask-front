@@ -1,78 +1,80 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Service, CreateServiceRequest, UpdateServiceRequest } from '../../models/service.model';
 import { ServiceService } from '../../services/service.service';
-import { SERVICE_TYPES, DEFAULT_MAJORATIONS, DEFAULT_TARIFS, SERVICE_VALIDATION_MESSAGES } from '../../models/service.constants';
-import { CreateServiceRequest, Service, UpdateServiceRequest } from '../../models/service.model';
-import { NotificationService } from "../../../../shared/services/notification.service";
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { SERVICE_TYPES, DEFAULT_TARIFS, SERVICE_VALIDATION_MESSAGES } from '../../models/service.constants';
+
+interface TarifDefaults {
+  horaire?: number;
+  fixe?: number;
+  deplacement?: number;
+}
 
 @Component({
   selector: 'app-service-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './service-form.component.html'
 })
 export class ServiceFormComponent implements OnInit {
   private fb = inject(FormBuilder);
-  protected serviceService = inject(ServiceService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private serviceService = inject(ServiceService);
   private notificationService = inject(NotificationService);
 
-  serviceForm: FormGroup;
-  serviceId?: string;
+  serviceForm!: FormGroup;
   isEditMode = false;
-  showAdvancedOptions = signal(false);
-  tarifMode = signal<'hourly' | 'fixed'>('hourly');
-
+  serviceId?: string;
+  currentService?: Service;
   serviceTypes = SERVICE_TYPES;
   validationMessages = SERVICE_VALIDATION_MESSAGES;
-  defaultMajorations = DEFAULT_MAJORATIONS;
-  defaultTarifs = DEFAULT_TARIFS;
+  defaultTarifs: { [key: string]: TarifDefaults } = DEFAULT_TARIFS;
 
-  isSubmitting = signal(false);
-  currentService?: Service;
+  tarifMode = signal<'hourly' | 'fixed'>('hourly');
+  showAdvancedOptions = signal(false);
+  loading = signal(false);
 
-  constructor() {
-    this.serviceForm = this.fb.group({
-      nom: ['', [
-        Validators.required,
-        Validators.minLength(3),
-        Validators.maxLength(100)
-      ]],
-      description: ['', [
-        Validators.required,
-        Validators.minLength(10),
-        Validators.maxLength(500)
-      ]],
-      type: ['', Validators.required],
-      tarifHoraire: [null, [Validators.min(0), Validators.max(1000)]],
-      tarifFixe: [null, [Validators.min(0), Validators.max(10000)]],
-      majorationUrgence: [DEFAULT_MAJORATIONS.urgence, [
-        Validators.required,
-        Validators.min(1),
-        Validators.max(3)
-      ]],
-      majorationWeekend: [DEFAULT_MAJORATIONS.weekend, [
-        Validators.required,
-        Validators.min(1),
-        Validators.max(3)
-      ]],
-      fraisDeplacement: [null, [Validators.min(0), Validators.max(500)]]
-    }, { validators: this.tarifExclusiveValidator });
-
-    this.serviceForm.get('type')?.valueChanges.subscribe(type => {
-      this.onTypeChange(type);
-    });
-
-    // S'assurer qu'au démarrage, seul le mode horaire a une valeur
-    this.toggleTarifMode('hourly');
-  }
+  currentTypeLabel = computed(() => {
+    const typeValue = this.serviceForm?.get('type')?.value;
+    const type = this.serviceTypes.find(t => t.value === typeValue);
+    return type?.label || 'Type de service';
+  });
 
   ngOnInit(): void {
-    this.serviceId = this.route.snapshot.params['id'];
+    this.initializeForm();
+    this.checkEditMode();
+  }
 
+  initializeForm(): void {
+    this.serviceForm = this.fb.group({
+      nom: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
+      type: ['', Validators.required],
+      tarifHoraire: [null],
+      tarifFixe: [null],
+      majorationUrgence: [1.0, [Validators.min(1), Validators.max(3)]],
+      majorationWeekend: [1.0, [Validators.min(1), Validators.max(3)]],
+      fraisDeplacement: [0, [Validators.min(0)]]
+    });
+
+    this.setInitialValidators();
+  }
+
+  setInitialValidators(): void {
+    this.serviceForm.get('tarifHoraire')?.setValidators([
+      Validators.required,
+      Validators.min(1),
+      Validators.max(1000)
+    ]);
+    this.serviceForm.get('tarifFixe')?.disable();
+  }
+
+  checkEditMode(): void {
+    this.serviceId = this.route.snapshot.params['id'];
     if (this.serviceId) {
       this.isEditMode = true;
       this.loadService();
@@ -117,6 +119,14 @@ export class ServiceFormComponent implements OnInit {
     });
 
     this.serviceForm.get('type')?.disable();
+
+    if (service.tarification.tarifHoraire) {
+      this.serviceForm.get('tarifFixe')?.disable();
+      this.serviceForm.get('tarifHoraire')?.enable();
+    } else {
+      this.serviceForm.get('tarifHoraire')?.disable();
+      this.serviceForm.get('tarifFixe')?.enable();
+    }
   }
 
   onTypeChange(type: string): void {
@@ -125,7 +135,6 @@ export class ServiceFormComponent implements OnInit {
     const defaults = this.defaultTarifs[type];
     if (!defaults) return;
 
-    // Ne mettre à jour que le tarif correspondant au mode actuel
     if (this.tarifMode() === 'hourly' && 'horaire' in defaults) {
       this.serviceForm.patchValue({
         tarifHoraire: defaults.horaire,
@@ -142,12 +151,11 @@ export class ServiceFormComponent implements OnInit {
   toggleTarifMode(mode: 'hourly' | 'fixed'): void {
     this.tarifMode.set(mode);
 
-    // IMPORTANT : Nettoyer COMPLÈTEMENT l'autre tarif
     if (mode === 'hourly') {
       this.serviceForm.get('tarifFixe')?.reset();
       this.serviceForm.get('tarifFixe')?.setValue(null);
       this.serviceForm.get('tarifFixe')?.clearValidators();
-      this.serviceForm.get('tarifFixe')?.disable(); // DÉSACTIVER le champ
+      this.serviceForm.get('tarifFixe')?.disable();
       this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
 
       this.serviceForm.get('tarifHoraire')?.enable();
@@ -168,7 +176,7 @@ export class ServiceFormComponent implements OnInit {
       this.serviceForm.get('tarifHoraire')?.reset();
       this.serviceForm.get('tarifHoraire')?.setValue(null);
       this.serviceForm.get('tarifHoraire')?.clearValidators();
-      this.serviceForm.get('tarifHoraire')?.disable(); // DÉSACTIVER le champ
+      this.serviceForm.get('tarifHoraire')?.disable();
       this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
 
       this.serviceForm.get('tarifFixe')?.enable();
@@ -206,9 +214,9 @@ export class ServiceFormComponent implements OnInit {
     };
 
     if (this.tarifMode() === 'hourly') {
-      data.tarifHoraire = formValue.tarifHoraire || null;
+      data.tarifHoraire = formValue.tarifHoraire;
     } else {
-      data.tarifFixe = formValue.tarifFixe || null;
+      data.tarifFixe = formValue.tarifFixe;
     }
 
     if (formValue.fraisDeplacement) {
@@ -224,20 +232,17 @@ export class ServiceFormComponent implements OnInit {
     const data: UpdateServiceRequest = {
       nom: formValue.nom,
       description: formValue.description,
-      type: formValue.type,
       majorationUrgence: formValue.majorationUrgence,
       majorationWeekend: formValue.majorationWeekend
     };
 
     if (this.tarifMode() === 'hourly') {
-      data.tarifHoraire = formValue.tarifHoraire || null;
-      data.tarifFixe = undefined;
+      data.tarifHoraire = formValue.tarifHoraire;
     } else {
-      data.tarifFixe = formValue.tarifFixe || null;
-      data.tarifHoraire = undefined;
+      data.tarifFixe = formValue.tarifFixe;
     }
 
-    if (formValue.fraisDeplacement !== null && formValue.fraisDeplacement !== undefined) {
+    if (formValue.fraisDeplacement !== undefined && formValue.fraisDeplacement !== null) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
@@ -246,154 +251,111 @@ export class ServiceFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.serviceForm.invalid) {
-      this.markFormTouched();
-
-      const tarifError = this.getFormError();
-      if (tarifError) {
-        this.notificationService.error('Erreur de tarification', tarifError);
-      } else {
-        this.notificationService.warning(
-          'Formulaire invalide',
-          'Veuillez corriger les erreurs avant de continuer'
-        );
-      }
+      this.markFormGroupTouched(this.serviceForm);
       return;
     }
 
-    this.isSubmitting.set(true);
+    this.loading.set(true);
 
     if (this.isEditMode && this.serviceId) {
-      const updateData = this.prepareUpdateData();
-      this.serviceService.updateService(this.serviceId, updateData).subscribe({
-        next: () => {
-          this.notificationService.success(
-            'Service modifié',
-            'Le service a été mis à jour avec succès'
-          );
-          this.router.navigate(['/services']);
-        },
-        error: (error) => {
-          console.error('Erreur lors de la mise à jour:', error);
-          this.notificationService.error(
-            'Erreur',
-            'Impossible de mettre à jour le service'
-          );
-          this.isSubmitting.set(false);
-        }
-      });
+      this.updateService();
     } else {
-      const createData = this.prepareCreateData();
-      this.serviceService.createService(createData).subscribe({
-        next: () => {
-          this.notificationService.success(
-            'Service créé',
-            'Le nouveau service a été ajouté avec succès'
-          );
-          this.router.navigate(['/services']);
-        },
-        error: (error) => {
-          console.error('Erreur lors de la création:', error);
-          this.notificationService.error(
-            'Erreur',
-            'Impossible de créer le service'
-          );
-          this.isSubmitting.set(false);
-        }
-      });
+      this.createService();
     }
   }
 
-  cancel(): void {
+  createService(): void {
+    const data = this.prepareCreateData();
+
+    this.serviceService.createService(data).subscribe({
+      next: () => {
+        this.notificationService.success(
+          'Service créé',
+          'Le service a été créé avec succès'
+        );
+        this.router.navigate(['/services']);
+      },
+      error: (error) => {
+        this.loading.set(false);
+        console.error('Erreur lors de la création:', error);
+      }
+    });
+  }
+
+  updateService(): void {
+    if (!this.serviceId) return;
+
+    const data = this.prepareUpdateData();
+
+    this.serviceService.updateService(this.serviceId, data).subscribe({
+      next: () => {
+        this.notificationService.success(
+          'Service modifié',
+          'Le service a été modifié avec succès'
+        );
+        this.router.navigate(['/services']);
+      },
+      error: (error) => {
+        this.loading.set(false);
+        console.error('Erreur lors de la mise à jour:', error);
+      }
+    });
+  }
+
+  onCancel(): void {
     this.router.navigate(['/services']);
   }
 
-  hasError(field: string): boolean {
-    const control = this.serviceForm.get(field);
-    return !!(control && control.invalid && (control.dirty || control.touched));
+  markFormGroupTouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 
-  getErrorMessage(field: string): string {
-    const control = this.serviceForm.get(field);
+  getErrorMessage(fieldName: string): string {
+    const control = this.serviceForm.get(fieldName);
     if (!control || !control.errors) return '';
 
     const errors = control.errors;
 
-    if (field === 'nom') {
+    if (fieldName === 'nom') {
       if (errors['required']) return this.validationMessages.nom.required;
       if (errors['minlength']) return this.validationMessages.nom.minlength;
       if (errors['maxlength']) return this.validationMessages.nom.maxlength;
     }
 
-    if (field === 'description') {
+    if (fieldName === 'description') {
       if (errors['required']) return this.validationMessages.description.required;
       if (errors['minlength']) return this.validationMessages.description.minlength;
       if (errors['maxlength']) return this.validationMessages.description.maxlength;
     }
 
-    if (field === 'type') {
+    if (fieldName === 'type') {
       if (errors['required']) return this.validationMessages.type.required;
     }
 
-    if (field === 'tarifHoraire' || field === 'tarifFixe') {
-      if (errors['required']) return 'Ce tarif est requis pour le mode sélectionné';
+    if (fieldName === 'tarifHoraire' || fieldName === 'tarifFixe') {
+      if (errors['required']) return 'Ce tarif est requis';
       if (errors['min']) return this.validationMessages.tarif.min;
       if (errors['max']) return this.validationMessages.tarif.max;
     }
 
-    if (field === 'majorationUrgence' || field === 'majorationWeekend') {
+    if (fieldName === 'majorationUrgence' || fieldName === 'majorationWeekend') {
       if (errors['min']) return this.validationMessages.majoration.min;
       if (errors['max']) return this.validationMessages.majoration.max;
     }
 
-    if (field === 'fraisDeplacement') {
+    if (fieldName === 'fraisDeplacement') {
       if (errors['min']) return this.validationMessages.fraisDeplacement.min;
     }
 
-    return 'Erreur de validation';
+    return '';
   }
 
-  getFormError(): string | null {
-    if (this.serviceForm.errors?.['tarifRequired']) {
-      return this.validationMessages.tarif.required;
-    }
-    if (this.serviceForm.errors?.['tarifConflict']) {
-      return this.validationMessages.tarif.conflict;
-    }
-    return null;
-  }
-
-  getTypeDescription(type: string): string {
-    const serviceType = this.serviceTypes.find(t => t.value === type);
-    return serviceType?.description || '';
-  }
-
-  formatMajorationDisplay(value: number): string {
-    const percentage = Math.round((value - 1) * 100);
-    return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
-  }
-
-  private tarifExclusiveValidator(control: AbstractControl): ValidationErrors | null {
-    const tarifHoraire = control.get('tarifHoraire')?.value;
-    const tarifFixe = control.get('tarifFixe')?.value;
-
-    const hasHoraire = tarifHoraire !== null && tarifHoraire !== undefined;
-    const hasFixe = tarifFixe !== null && tarifFixe !== undefined;
-
-    if (!hasHoraire && !hasFixe) {
-      return { tarifRequired: true };
-    }
-
-    if (hasHoraire && hasFixe) {
-      return { tarifConflict: true };
-    }
-
-    return null;
-  }
-
-  private markFormTouched(): void {
-    Object.keys(this.serviceForm.controls).forEach(key => {
-      const control = this.serviceForm.get(key);
-      control?.markAsTouched();
-    });
-  }
+  protected readonly Math = Math;
 }
