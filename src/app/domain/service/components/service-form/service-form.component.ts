@@ -120,8 +120,8 @@ export class ServiceFormComponent implements OnInit {
       nom: service.nom,
       description: service.description,
       type: service.type.value,
-      tarifHoraire: service.tarification.tarifHoraire,
-      tarifFixe: service.tarification.tarifFixe,
+      tarifHoraire: service.tarification.tarifHoraire ?? null,
+      tarifFixe: service.tarification.tarifFixe ?? null,
       majorationUrgence: service.tarification.majorationUrgence ?? 0,
       majorationWeekend: service.tarification.majorationWeekend ?? 0,
       fraisDeplacement: service.tarification.fraisDeplacement ?? 0
