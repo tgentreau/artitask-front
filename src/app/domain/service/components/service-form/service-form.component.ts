@@ -152,9 +152,8 @@ export class ServiceFormComponent implements OnInit {
     this.tarifMode.set(mode);
 
     if (mode === 'hourly') {
-      this.serviceForm.get('tarifFixe')?.reset();
-      this.serviceForm.get('tarifFixe')?.setValue(null);
       this.serviceForm.get('tarifFixe')?.clearValidators();
+      this.serviceForm.get('tarifFixe')?.setValue(null);
       this.serviceForm.get('tarifFixe')?.disable();
       this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
 
@@ -173,9 +172,8 @@ export class ServiceFormComponent implements OnInit {
       ]);
       this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
     } else {
-      this.serviceForm.get('tarifHoraire')?.reset();
-      this.serviceForm.get('tarifHoraire')?.setValue(null);
       this.serviceForm.get('tarifHoraire')?.clearValidators();
+      this.serviceForm.get('tarifHoraire')?.setValue(null);
       this.serviceForm.get('tarifHoraire')?.disable();
       this.serviceForm.get('tarifHoraire')?.updateValueAndValidity();
 
@@ -213,16 +211,28 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
+    // NETTOYER EXPLICITEMENT - UN SEUL TARIF
     if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
+      // NE PAS envoyer tarifFixe du tout
     } else {
       data.tarifFixe = formValue.tarifFixe;
+      // NE PAS envoyer tarifHoraire du tout
     }
 
     if (formValue.fraisDeplacement) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
+    // NETTOYAGE FINAL - Supprimer les undefined/null
+    Object.keys(data).forEach(key => {
+      if (data[key as keyof CreateServiceRequest] === null ||
+        data[key as keyof CreateServiceRequest] === undefined) {
+        delete data[key as keyof CreateServiceRequest];
+      }
+    });
+
+    console.log('DATA TO SEND:', data); // DEBUG
     return data;
   }
 
@@ -236,16 +246,28 @@ export class ServiceFormComponent implements OnInit {
       majorationWeekend: formValue.majorationWeekend
     };
 
+    // NETTOYER EXPLICITEMENT - UN SEUL TARIF
     if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
+      // NE PAS envoyer tarifFixe du tout
     } else {
       data.tarifFixe = formValue.tarifFixe;
+      // NE PAS envoyer tarifHoraire du tout
     }
 
     if (formValue.fraisDeplacement !== undefined && formValue.fraisDeplacement !== null) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
+    // NETTOYAGE FINAL - Supprimer les undefined/null
+    Object.keys(data).forEach(key => {
+      if (data[key as keyof UpdateServiceRequest] === null ||
+        data[key as keyof UpdateServiceRequest] === undefined) {
+        delete data[key as keyof UpdateServiceRequest];
+      }
+    });
+
+    console.log('UPDATE DATA TO SEND:', data); // DEBUG
     return data;
   }
 
@@ -267,6 +289,17 @@ export class ServiceFormComponent implements OnInit {
   createService(): void {
     const data = this.prepareCreateData();
 
+    // VALIDATION FINALE AVANT ENVOI
+    if (data.tarifHoraire && data.tarifFixe) {
+      console.error('ERREUR: Les deux tarifs sont présents!', data);
+      this.notificationService.error(
+        'Erreur de tarification',
+        'Impossible d\'avoir deux modes de tarification simultanés'
+      );
+      this.loading.set(false);
+      return;
+    }
+
     this.serviceService.createService(data).subscribe({
       next: () => {
         this.notificationService.success(
@@ -286,6 +319,17 @@ export class ServiceFormComponent implements OnInit {
     if (!this.serviceId) return;
 
     const data = this.prepareUpdateData();
+
+    // VALIDATION FINALE AVANT ENVOI
+    if (data.tarifHoraire && data.tarifFixe) {
+      console.error('ERREUR: Les deux tarifs sont présents!', data);
+      this.notificationService.error(
+        'Erreur de tarification',
+        'Impossible d\'avoir deux modes de tarification simultanés'
+      );
+      this.loading.set(false);
+      return;
+    }
 
     this.serviceService.updateService(this.serviceId, data).subscribe({
       next: () => {
