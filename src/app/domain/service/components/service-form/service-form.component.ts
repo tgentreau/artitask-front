@@ -56,8 +56,8 @@ export class ServiceFormComponent implements OnInit {
       type: ['', Validators.required],
       tarifHoraire: [null],
       tarifFixe: [null],
-      majorationUrgence: [1.0, [Validators.min(1), Validators.max(3)]],
-      majorationWeekend: [1.0, [Validators.min(1), Validators.max(3)]],
+      majorationUrgence: [0, [Validators.min(0), Validators.max(5)]],
+      majorationWeekend: [0, [Validators.min(0), Validators.max(3)]],
       fraisDeplacement: [0, [Validators.min(0)]]
     });
 
@@ -101,51 +101,48 @@ export class ServiceFormComponent implements OnInit {
   }
 
   populateForm(service: Service): void {
-    if (service.tarification.tarifHoraire) {
+    const hasTarifHoraire = service.tarification.tarifHoraire !== null &&
+      service.tarification.tarifHoraire !== undefined;
+    const hasTarifFixe = service.tarification.tarifFixe !== null &&
+      service.tarification.tarifFixe !== undefined;
+
+    if (hasTarifHoraire) {
       this.tarifMode.set('hourly');
-    } else if (service.tarification.tarifFixe) {
+      this.serviceForm.get('tarifHoraire')?.enable();
+      this.serviceForm.get('tarifFixe')?.disable();
+    } else if (hasTarifFixe) {
       this.tarifMode.set('fixed');
+      this.serviceForm.get('tarifFixe')?.enable();
+      this.serviceForm.get('tarifHoraire')?.disable();
     }
+
+    const majorationUrgence = service.tarification.majorationUrgence !== null &&
+    service.tarification.majorationUrgence !== undefined
+      ? service.tarification.majorationUrgence
+      : 0;
+
+    const majorationWeekend = service.tarification.majorationWeekend !== null &&
+    service.tarification.majorationWeekend !== undefined
+      ? service.tarification.majorationWeekend
+      : 0;
+
+    const fraisDeplacement = service.tarification.fraisDeplacement !== null &&
+    service.tarification.fraisDeplacement !== undefined
+      ? service.tarification.fraisDeplacement
+      : 0;
 
     this.serviceForm.patchValue({
       nom: service.nom,
       description: service.description,
       type: service.type.value,
-      tarifHoraire: service.tarification.tarifHoraire,
-      tarifFixe: service.tarification.tarifFixe,
-      majorationUrgence: service.tarification.majorationUrgence,
-      majorationWeekend: service.tarification.majorationWeekend,
-      fraisDeplacement: service.tarification.fraisDeplacement
+      tarifHoraire: hasTarifHoraire ? service.tarification.tarifHoraire : null,
+      tarifFixe: hasTarifFixe ? service.tarification.tarifFixe : null,
+      majorationUrgence: majorationUrgence,
+      majorationWeekend: majorationWeekend,
+      fraisDeplacement: fraisDeplacement
     });
 
     this.serviceForm.get('type')?.disable();
-
-    if (service.tarification.tarifHoraire) {
-      this.serviceForm.get('tarifFixe')?.disable();
-      this.serviceForm.get('tarifHoraire')?.enable();
-    } else {
-      this.serviceForm.get('tarifHoraire')?.disable();
-      this.serviceForm.get('tarifFixe')?.enable();
-    }
-  }
-
-  onTypeChange(type: string): void {
-    if (!type || this.isEditMode) return;
-
-    const defaults = this.defaultTarifs[type];
-    if (!defaults) return;
-
-    if (this.tarifMode() === 'hourly' && 'horaire' in defaults) {
-      this.serviceForm.patchValue({
-        tarifHoraire: defaults.horaire,
-        fraisDeplacement: defaults.deplacement
-      });
-    } else if (this.tarifMode() === 'fixed' && 'fixe' in defaults) {
-      this.serviceForm.patchValue({
-        tarifFixe: defaults.fixe,
-        fraisDeplacement: defaults.deplacement
-      });
-    }
   }
 
   toggleTarifMode(mode: 'hourly' | 'fixed'): void {
@@ -162,7 +159,7 @@ export class ServiceFormComponent implements OnInit {
       if (!currentHoraire) {
         const typeValue = this.serviceForm.get('type')?.value;
         const defaults = typeValue ? this.defaultTarifs[typeValue] : null;
-        const defaultValue = (defaults && 'horaire' in defaults) ? defaults.horaire : 45;
+        const defaultValue = (defaults && 'horaire' in defaults) ? defaults.horaire : 50;
         this.serviceForm.get('tarifHoraire')?.setValue(defaultValue);
       }
       this.serviceForm.get('tarifHoraire')?.setValidators([
@@ -192,12 +189,6 @@ export class ServiceFormComponent implements OnInit {
       ]);
       this.serviceForm.get('tarifFixe')?.updateValueAndValidity();
     }
-
-    this.serviceForm.updateValueAndValidity();
-  }
-
-  toggleAdvancedOptions(): void {
-    this.showAdvancedOptions.update(show => !show);
   }
 
   prepareCreateData(): CreateServiceRequest {
@@ -207,24 +198,20 @@ export class ServiceFormComponent implements OnInit {
       nom: formValue.nom,
       description: formValue.description,
       type: formValue.type,
-      majorationUrgence: formValue.majorationUrgence,
-      majorationWeekend: formValue.majorationWeekend
+      majorationUrgence: formValue.majorationUrgence || 0,
+      majorationWeekend: formValue.majorationWeekend || 0
     };
 
-    // NETTOYER EXPLICITEMENT - UN SEUL TARIF
     if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
-      // NE PAS envoyer tarifFixe du tout
     } else {
       data.tarifFixe = formValue.tarifFixe;
-      // NE PAS envoyer tarifHoraire du tout
     }
 
-    if (formValue.fraisDeplacement) {
+    if (formValue.fraisDeplacement !== null && formValue.fraisDeplacement !== undefined) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
-    // NETTOYAGE FINAL - Supprimer les undefined/null
     Object.keys(data).forEach(key => {
       if (data[key as keyof CreateServiceRequest] === null ||
         data[key as keyof CreateServiceRequest] === undefined) {
@@ -232,7 +219,6 @@ export class ServiceFormComponent implements OnInit {
       }
     });
 
-    console.log('DATA TO SEND:', data); // DEBUG
     return data;
   }
 
@@ -242,24 +228,20 @@ export class ServiceFormComponent implements OnInit {
     const data: UpdateServiceRequest = {
       nom: formValue.nom,
       description: formValue.description,
-      majorationUrgence: formValue.majorationUrgence,
-      majorationWeekend: formValue.majorationWeekend
+      majorationUrgence: formValue.majorationUrgence || 0,
+      majorationWeekend: formValue.majorationWeekend || 0
     };
 
-    // NETTOYER EXPLICITEMENT - UN SEUL TARIF
     if (this.tarifMode() === 'hourly') {
       data.tarifHoraire = formValue.tarifHoraire;
-      // NE PAS envoyer tarifFixe du tout
     } else {
       data.tarifFixe = formValue.tarifFixe;
-      // NE PAS envoyer tarifHoraire du tout
     }
 
-    if (formValue.fraisDeplacement !== undefined && formValue.fraisDeplacement !== null) {
+    if (formValue.fraisDeplacement !== null && formValue.fraisDeplacement !== undefined) {
       data.fraisDeplacement = formValue.fraisDeplacement;
     }
 
-    // NETTOYAGE FINAL - Supprimer les undefined/null
     Object.keys(data).forEach(key => {
       if (data[key as keyof UpdateServiceRequest] === null ||
         data[key as keyof UpdateServiceRequest] === undefined) {
@@ -267,7 +249,6 @@ export class ServiceFormComponent implements OnInit {
       }
     });
 
-    console.log('UPDATE DATA TO SEND:', data); // DEBUG
     return data;
   }
 
@@ -289,7 +270,6 @@ export class ServiceFormComponent implements OnInit {
   createService(): void {
     const data = this.prepareCreateData();
 
-    // VALIDATION FINALE AVANT ENVOI
     if (data.tarifHoraire && data.tarifFixe) {
       console.error('ERREUR: Les deux tarifs sont présents!', data);
       this.notificationService.error(
@@ -320,7 +300,6 @@ export class ServiceFormComponent implements OnInit {
 
     const data = this.prepareUpdateData();
 
-    // VALIDATION FINALE AVANT ENVOI
     if (data.tarifHoraire && data.tarifFixe) {
       console.error('ERREUR: Les deux tarifs sont présents!', data);
       this.notificationService.error(
@@ -399,6 +378,10 @@ export class ServiceFormComponent implements OnInit {
     }
 
     return '';
+  }
+
+  toggleAdvancedOptions(): void {
+    this.showAdvancedOptions.set(!this.showAdvancedOptions());
   }
 
   protected readonly Math = Math;
