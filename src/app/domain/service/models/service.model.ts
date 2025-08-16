@@ -1,6 +1,8 @@
-/**
- * Interface principale Service alignée avec le backend
- */
+export interface MoneyAmount {
+  amount: number;
+  currency: string;
+}
+
 export interface Service {
   id: string;
   nom: string;
@@ -12,29 +14,20 @@ export interface Service {
   updatedAt: Date;
 }
 
-/**
- * Type de service avec métadonnées
- */
 export interface ServiceType {
   value: string;
   label: string;
   description: string;
 }
 
-/**
- * Tarification du service
- */
 export interface Tarification {
-  tarifHoraire?: number;
-  tarifFixe?: number;
+  tarifHoraire?: MoneyAmount | number;
+  tarifFixe?: MoneyAmount | number;
   majorationUrgence: number;
   majorationWeekend: number;
-  fraisDeplacement?: number;
+  fraisDeplacement?: MoneyAmount | number;
 }
 
-/**
- * DTO pour créer un service - aligné avec CreateServiceDto backend
- */
 export interface CreateServiceRequest {
   nom: string;
   description: string;
@@ -46,9 +39,6 @@ export interface CreateServiceRequest {
   fraisDeplacement?: number;
 }
 
-/**
- * DTO pour mettre à jour un service - aligné avec UpdateServiceDto backend
- */
 export interface UpdateServiceRequest {
   nom?: string;
   description?: string;
@@ -60,9 +50,6 @@ export interface UpdateServiceRequest {
   fraisDeplacement?: number;
 }
 
-/**
- * DTO pour calculer une estimation - aligné avec CalculateEstimateDto backend
- */
 export interface CalculateEstimateRequest {
   heuresEstimees?: number;
   estUrgence?: boolean;
@@ -70,9 +57,6 @@ export interface CalculateEstimateRequest {
   incluireFraisDeplacement?: boolean;
 }
 
-/**
- * Réponse d'estimation - alignée avec EstimateResponseDto backend
- */
 export interface EstimateResponse {
   montantBase: number;
   majorationUrgence?: number;
@@ -82,9 +66,6 @@ export interface EstimateResponse {
   details: string[];
 }
 
-/**
- * Réponse paginée pour la liste des services
- */
 export interface ServiceListResponse {
   items: Service[];
   total: number;
@@ -93,9 +74,6 @@ export interface ServiceListResponse {
   totalPages: number;
 }
 
-/**
- * Filtres pour la recherche de services
- */
 export interface ServiceFilters {
   type?: string;
   actif?: boolean;

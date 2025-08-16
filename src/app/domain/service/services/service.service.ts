@@ -1,421 +1,104 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   Service,
   CreateServiceRequest,
   UpdateServiceRequest,
+  ServiceListResponse,
+  ServiceFilters,
   CalculateEstimateRequest,
   EstimateResponse,
-  ServiceListResponse,
-  ServiceFilters
+  MoneyAmount,
+  Tarification
 } from '../models/service.model';
-import {NotificationService} from "../../../shared/services/notification.service";
-import {ApiResponse} from "../../../shared/models/api-error-response.interface";
+
+export interface ApiResponse<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ServiceService {
   private http = inject(HttpClient);
-  private notificationService = inject(NotificationService);
   private apiUrl = `${environment.apiUrl}/services`;
 
-  private servicesSignal = signal<Service[]>([]);
-  private currentServiceSignal = signal<Service | null>(null);
-  private loadingSignal = signal(false);
-  private errorSignal = signal<string | null>(null);
-  private totalSignal = signal(0);
-  private currentPageSignal = signal(1);
-  private pageSizeSignal = signal(20);
+  private extractAmount(value: MoneyAmount | number | undefined): number | undefined {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'number') return value;
+    return value.amount;
+  }
 
-  services$ = computed(() => this.servicesSignal());
-  currentService$ = computed(() => this.currentServiceSignal());
-  loading$ = computed(() => this.loadingSignal());
-  error$ = computed(() => this.errorSignal());
-  total$ = computed(() => this.totalSignal());
-  currentPage$ = computed(() => this.currentPageSignal());
-  totalPages$ = computed(() => Math.ceil(this.totalSignal() / this.pageSizeSignal()));
+  private normalizeTarification(tarification: any): Tarification {
+    return {
+      tarifHoraire: this.extractAmount(tarification.tarifHoraire),
+      tarifFixe: this.extractAmount(tarification.tarifFixe),
+      majorationUrgence: tarification.majorationUrgence ?? 0,
+      majorationWeekend: tarification.majorationWeekend ?? 0,
+      fraisDeplacement: this.extractAmount(tarification.fraisDeplacement)
+    };
+  }
 
-  activeServices$ = computed(() =>
-    this.servicesSignal().filter(s => s.actif)
-  );
+  private normalizeService(service: any): Service {
+    return {
+      ...service,
+      tarification: this.normalizeTarification(service.tarification)
+    };
+  }
 
-  inactiveServices$ = computed(() =>
-    this.servicesSignal().filter(s => !s.actif)
-  );
-
-  servicesByType$ = computed(() => {
-    const services = this.servicesSignal();
-    return services.reduce((acc, service) => {
-      const type = service.type.value;
-      if (!acc[type]) {
-        acc[type] = [];
-      }
-      acc[type].push(service);
-      return acc;
-    }, {} as Record<string, Service[]>);
-  });
-
-  /**
-   * Récupère la liste des services avec pagination et filtres
-   */
-  getServices(
-    page = 1,
-    limit = 20,
-    filters?: ServiceFilters
-  ): Observable<ApiResponse<ServiceListResponse>> {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
-
-    if (filters?.type) {
-      params = params.set('type', filters.type);
-    }
-    if (filters?.actif !== undefined) {
-      params = params.set('actif', filters.actif.toString());
-    }
-    if (filters?.sortBy) {
-      params = params.set('sortBy', filters.sortBy);
-    }
-    if (filters?.sortOrder) {
-      params = params.set('sortOrder', filters.sortOrder);
+  getServices(filters?: ServiceFilters): Observable<ServiceListResponse> {
+    let params = new HttpParams();
+    if (filters) {
+      if (filters.type) params = params.set('type', filters.type);
+      if (filters.actif !== undefined) params = params.set('actif', filters.actif.toString());
+      if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+      if (filters.sortOrder) params = params.set('sortOrder', filters.sortOrder);
     }
 
     return this.http.get<ApiResponse<ServiceListResponse>>(this.apiUrl, { params }).pipe(
-      tap(response => {
-        const transformedItems = response.data.items.map(service =>
-          this.transformServiceData(service)
-        );
-        this.servicesSignal.set(transformedItems);
-        this.totalSignal.set(response.data.total);
-        this.currentPageSignal.set(response.data.page);
-        this.pageSizeSignal.set(response.data.limit);
-        this.loadingSignal.set(false);
-      }),
-      catchError(error => this.handleError(error))
+      map(response => ({
+        ...response.data,
+        items: response.data.items.map(service => this.normalizeService(service))
+      }))
     );
   }
 
-  /**
-   * Récupère un service par son ID
-   */
   getService(id: string): Observable<ApiResponse<Service>> {
-    this.loadingSignal.set(true);
-
     return this.http.get<ApiResponse<Service>>(`${this.apiUrl}/${id}`).pipe(
-      tap(response => {
-        const transformedService = this.transformServiceData(response.data);
-        this.currentServiceSignal.set(transformedService);
-        this.loadingSignal.set(false);
-      }),
-      catchError(error => this.handleError(error))
+      map(response => ({
+        ...response,
+        data: this.normalizeService(response.data)
+      }))
     );
   }
 
-  /**
-   * Crée un nouveau service
-   */
-  createService(data: CreateServiceRequest): Observable<ApiResponse<{ serviceId: string }>> {
-    this.loadingSignal.set(true);
-
-    // Validation côté client
-    if (!this.validateServiceData(data)) {
-      return throwError(() => new Error('Données invalides'));
-    }
-
-    return this.http.post<ApiResponse<{ serviceId: string }>>(this.apiUrl, data).pipe(
-      tap(response => {
-        this.loadingSignal.set(false);
-        this.notificationService.success(
-          'Service créé',
-          `Le service "${data.nom}" a été créé avec succès`
-        );
-        // Rafraîchir la liste
-        this.refreshServices();
-      }),
-      catchError(error => this.handleError(error))
-    );
+  createService(data: CreateServiceRequest): Observable<ApiResponse<{ id: string }>> {
+    return this.http.post<ApiResponse<{ id: string }>>(this.apiUrl, data);
   }
 
-  /**
-   * Met à jour un service existant
-   */
   updateService(id: string, data: UpdateServiceRequest): Observable<ApiResponse<void>> {
-    this.loadingSignal.set(true);
-
-    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/${id}`, data).pipe(
-      tap(() => {
-        this.loadingSignal.set(false);
-        this.notificationService.success(
-          'Service modifié',
-          'Les modifications ont été enregistrées'
-        );
-        // Mettre à jour localement
-        this.updateLocalService(id, data);
-        // Rafraîchir depuis le serveur pour être sûr
-        this.getService(id).subscribe();
-      }),
-      catchError(error => this.handleError(error))
-    );
+    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/${id}`, data);
   }
 
-  /**
-   * Active un service
-   */
-  activateService(id: string): Observable<ApiResponse<void>> {
-    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/${id}/activate`, {}).pipe(
-      tap(() => {
-        this.notificationService.success(
-          'Service activé',
-          'Le service est maintenant disponible'
-        );
-        this.updateServiceStatus(id, true);
-      }),
-      catchError(error => this.handleError(error))
-    );
+  deleteService(id: string): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
   }
 
-  /**
-   * Désactive un service
-   */
-  deactivateService(id: string): Observable<ApiResponse<void>> {
-    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/${id}/deactivate`, {}).pipe(
-      tap(() => {
-        this.notificationService.warning(
-          'Service désactivé',
-          'Le service n\'est plus disponible'
-        );
-        this.updateServiceStatus(id, false);
-      }),
-      catchError(error => this.handleError(error))
-    );
+  toggleService(id: string): Observable<ApiResponse<void>> {
+    return this.http.patch<ApiResponse<void>>(`${this.apiUrl}/${id}/toggle`, {});
   }
 
-  /**
-   * Calcule une estimation pour un service
-   */
   calculateEstimate(
-    id: string,
+    serviceId: string,
     data: CalculateEstimateRequest
   ): Observable<ApiResponse<EstimateResponse>> {
-    this.loadingSignal.set(true);
-
     return this.http.post<ApiResponse<EstimateResponse>>(
-      `${this.apiUrl}/${id}/estimate`,
+      `${this.apiUrl}/${serviceId}/estimate`,
       data
-    ).pipe(
-      tap(response => {
-        this.loadingSignal.set(false);
-        const total = response.data.montantTotal;
-        this.notificationService.info(
-          'Estimation calculée',
-          `Montant total estimé : ${this.formatCurrency(total)}`
-        );
-      }),
-      catchError(error => this.handleError(error))
     );
-  }
-
-  /**
-   * Recherche de services par nom
-   */
-  searchServices(query: string): Observable<Service[]> {
-    if (!query || query.length < 2) {
-      return new Observable(observer => {
-        observer.next([]);
-        observer.complete();
-      });
-    }
-
-    const filtered = this.servicesSignal().filter(service =>
-      service.nom.toLowerCase().includes(query.toLowerCase()) ||
-      service.description.toLowerCase().includes(query.toLowerCase())
-    );
-
-    return new Observable(observer => {
-      observer.next(filtered);
-      observer.complete();
-    });
-  }
-
-  /**
-   * Efface le service courant
-   */
-  clearCurrentService(): void {
-    this.currentServiceSignal.set(null);
-  }
-
-  /**
-   * Rafraîchit la liste des services
-   */
-  refreshServices(): void {
-    this.getServices(
-      this.currentPageSignal(),
-      this.pageSizeSignal()
-    ).subscribe();
-  }
-
-  /**
-   * Réinitialise les erreurs
-   */
-  clearError(): void {
-    this.errorSignal.set(null);
-  }
-
-  /**
-   * Met à jour un service localement dans la liste
-   */
-  private updateLocalService(id: string, updates: UpdateServiceRequest): void {
-    this.servicesSignal.update(services =>
-      services.map(service => {
-        if (service.id === id) {
-          // Mise à jour partielle en préservant la structure complète
-          const updatedService: Service = {
-            ...service,
-            nom: updates.nom ?? service.nom,
-            description: updates.description ?? service.description,
-            type: updates.type ? {
-              value: updates.type,
-              label: updates.type,
-              description: ''
-            } : service.type,
-            tarification: {
-              ...service.tarification,
-              tarifHoraire: updates.tarifHoraire ?? service.tarification.tarifHoraire,
-              tarifFixe: updates.tarifFixe ?? service.tarification.tarifFixe,
-              majorationUrgence: updates.majorationUrgence ?? service.tarification.majorationUrgence,
-              majorationWeekend: updates.majorationWeekend ?? service.tarification.majorationWeekend,
-              fraisDeplacement: updates.fraisDeplacement ?? service.tarification.fraisDeplacement
-            },
-            updatedAt: new Date()
-          };
-          return updatedService;
-        }
-        return service;
-      })
-    );
-  }
-
-  /**
-   * Met à jour le statut d'un service localement
-   */
-  private updateServiceStatus(id: string, actif: boolean): void {
-    this.servicesSignal.update(services =>
-      services.map(service => {
-        if (service.id === id) {
-          return { ...service, actif };
-        }
-        return service;
-      })
-    );
-
-    // Mettre à jour aussi le service courant si c'est lui
-    const currentService = this.currentServiceSignal();
-    if (currentService && currentService.id === id) {
-      this.currentServiceSignal.set({ ...currentService, actif });
-    }
-  }
-
-  /**
-   * Valide les données d'un service
-   */
-  private validateServiceData(data: CreateServiceRequest): boolean {
-    // Vérifier qu'il y a soit un tarif horaire, soit un tarif fixe, mais pas les deux
-    if (!data.tarifHoraire && !data.tarifFixe) {
-      this.notificationService.error(
-        'Tarif requis',
-        'Vous devez spécifier un tarif horaire ou un tarif fixe'
-      );
-      return false;
-    }
-
-    if (data.tarifHoraire && data.tarifFixe) {
-      this.notificationService.error(
-        'Conflit de tarification',
-        'Vous ne pouvez pas spécifier à la fois un tarif horaire et un tarif fixe'
-      );
-      return false;
-    }
-
-    // Vérifier les majorations
-    if (data.majorationUrgence && (data.majorationUrgence < 1 || data.majorationUrgence > 3)) {
-      this.notificationService.error(
-        'Majoration invalide',
-        'La majoration urgence doit être entre 1 et 3'
-      );
-      return false;
-    }
-
-    if (data.majorationWeekend && (data.majorationWeekend < 1 || data.majorationWeekend > 3)) {
-      this.notificationService.error(
-        'Majoration invalide',
-        'La majoration weekend doit être entre 1 et 3'
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Gère les erreurs HTTP
-   */
-  private handleError(error: any): Observable<never> {
-    this.loadingSignal.set(false);
-
-    let errorMessage = 'Une erreur est survenue';
-
-    if (error.error?.message) {
-      errorMessage = error.error.message;
-    } else if (error.status === 0) {
-      errorMessage = 'Impossible de contacter le serveur';
-    } else if (error.status === 404) {
-      errorMessage = 'Service non trouvé';
-    } else if (error.status === 409) {
-      errorMessage = 'Un service avec ce nom existe déjà';
-    }
-
-    this.errorSignal.set(errorMessage);
-    this.notificationService.showHttpError(error);
-
-    return throwError(() => error);
-  }
-
-  /**
-   * Formate un montant en devise
-   */
-  private formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  }
-
-  private transformServiceData(service: any): Service {
-    return {
-      ...service,
-      tarification: {
-        tarifHoraire: typeof service.tarification.tarifHoraire === 'object'
-          ? service.tarification.tarifHoraire?.amount
-          : service.tarification.tarifHoraire,
-
-        tarifFixe: typeof service.tarification.tarifFixe === 'object'
-          ? service.tarification.tarifFixe?.amount
-          : service.tarification.tarifFixe,
-
-        majorationUrgence: service.tarification.majorationUrgence || 1,
-        majorationWeekend: service.tarification.majorationWeekend || 1,
-
-        fraisDeplacement: typeof service.tarification.fraisDeplacement === 'object'
-          ? service.tarification.fraisDeplacement?.amount
-          : service.tarification.fraisDeplacement
-      }
-    };
   }
 }

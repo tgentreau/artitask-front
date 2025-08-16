@@ -116,33 +116,37 @@ export class ServiceFormComponent implements OnInit {
       this.serviceForm.get('tarifHoraire')?.disable();
     }
 
-    const majorationUrgence = service.tarification.majorationUrgence !== null &&
-    service.tarification.majorationUrgence !== undefined
-      ? service.tarification.majorationUrgence
-      : 0;
-
-    const majorationWeekend = service.tarification.majorationWeekend !== null &&
-    service.tarification.majorationWeekend !== undefined
-      ? service.tarification.majorationWeekend
-      : 0;
-
-    const fraisDeplacement = service.tarification.fraisDeplacement !== null &&
-    service.tarification.fraisDeplacement !== undefined
-      ? service.tarification.fraisDeplacement
-      : 0;
-
     this.serviceForm.patchValue({
       nom: service.nom,
       description: service.description,
       type: service.type.value,
-      tarifHoraire: hasTarifHoraire ? service.tarification.tarifHoraire : null,
-      tarifFixe: hasTarifFixe ? service.tarification.tarifFixe : null,
-      majorationUrgence: majorationUrgence,
-      majorationWeekend: majorationWeekend,
-      fraisDeplacement: fraisDeplacement
+      tarifHoraire: service.tarification.tarifHoraire,
+      tarifFixe: service.tarification.tarifFixe,
+      majorationUrgence: service.tarification.majorationUrgence ?? 0,
+      majorationWeekend: service.tarification.majorationWeekend ?? 0,
+      fraisDeplacement: service.tarification.fraisDeplacement ?? 0
     });
 
     this.serviceForm.get('type')?.disable();
+  }
+
+  onTypeChange(type: string): void {
+    if (!type || this.isEditMode) return;
+
+    const defaults = this.defaultTarifs[type];
+    if (!defaults) return;
+
+    if (this.tarifMode() === 'hourly' && 'horaire' in defaults) {
+      this.serviceForm.patchValue({
+        tarifHoraire: defaults.horaire,
+        fraisDeplacement: defaults.deplacement || 0
+      });
+    } else if (this.tarifMode() === 'fixed' && 'fixe' in defaults) {
+      this.serviceForm.patchValue({
+        tarifFixe: defaults.fixe,
+        fraisDeplacement: defaults.deplacement || 0
+      });
+    }
   }
 
   toggleTarifMode(mode: 'hourly' | 'fixed'): void {
@@ -325,6 +329,10 @@ export class ServiceFormComponent implements OnInit {
     });
   }
 
+  toggleAdvancedOptions(): void {
+    this.showAdvancedOptions.set(!this.showAdvancedOptions());
+  }
+
   onCancel(): void {
     this.router.navigate(['/services']);
   }
@@ -378,10 +386,6 @@ export class ServiceFormComponent implements OnInit {
     }
 
     return '';
-  }
-
-  toggleAdvancedOptions(): void {
-    this.showAdvancedOptions.set(!this.showAdvancedOptions());
   }
 
   protected readonly Math = Math;
