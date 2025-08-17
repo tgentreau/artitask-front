@@ -95,21 +95,6 @@ export class ServiceListComponent implements OnInit {
     this.router.navigate(['/services', service.id, 'edit']);
   }
 
-  onCardEdit(service: Service, event: MouseEvent): void {
-    event.stopPropagation();
-    this.editService(service);
-  }
-
-  onCardDuplicate(service: Service, event: MouseEvent): void {
-    event.stopPropagation();
-    this.duplicateService(service);
-  }
-
-  onCardToggle(service: Service, event: MouseEvent): void {
-    event.stopPropagation();
-    this.toggleServiceStatus(service, event);
-  }
-
   duplicateService(service: Service): void {
     const extractAmount = (value: MoneyAmount | number | undefined): number => {
       if (!value) return 0;
@@ -148,7 +133,11 @@ export class ServiceListComponent implements OnInit {
     });
   }
 
-  toggleServiceStatus(service: Service, event: MouseEvent): void {
+  toggleServiceStatus(service: Service, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
     const action = service.actif ? 'deactivateService' : 'activateService';
     this.serviceService[action](service.id).subscribe({
       next: () => {
@@ -168,16 +157,41 @@ export class ServiceListComponent implements OnInit {
     });
   }
 
-  onCardEstimate(service: Service, event: MouseEvent): void {
-    event.stopPropagation();
+  estimateService(service: Service): void {
     this.router.navigate(['/services', service.id, 'estimate']);
   }
 
-  onCardSelect(serviceId: string, event: MouseEvent): void {
-    event.stopPropagation();
-    this.toggleServiceSelection(serviceId, event);
+  // Méthodes pour les événements du ServiceCardComponent (vue grille)
+  // Ces méthodes reçoivent EXACTEMENT ce que le composant enfant émet
+  onCardEdit(service: Service): void {
+    this.editService(service);
   }
 
+  onCardToggle(service: Service): void {
+    this.toggleServiceStatus(service);
+  }
+
+  onCardDuplicate(service: Service): void {
+    this.duplicateService(service);
+  }
+
+  onCardEstimate(service: Service): void {
+    this.estimateService(service);
+  }
+
+  onCardSelect(serviceId: string): void {
+    this.selectedServices.update(selected => {
+      const newSelected = new Set(selected);
+      if (newSelected.has(serviceId)) {
+        newSelected.delete(serviceId);
+      } else {
+        newSelected.add(serviceId);
+      }
+      return newSelected;
+    });
+  }
+
+  // Méthodes utilitaires pour la vue
   toggleViewMode(): void {
     this.viewMode.update(mode => mode === 'grid' ? 'list' : 'grid');
   }
