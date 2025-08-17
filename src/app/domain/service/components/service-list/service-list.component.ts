@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ServiceService } from '../../services/service.service';
-import { Service, ServiceFilters } from '../../models/service.model';
+import { Service, ServiceFilters, MoneyAmount } from '../../models/service.model';
 import { SERVICE_TYPES, STATUS_COLORS } from '../../models/service.constants';
 import { NotificationService } from "../../../../shared/services/notification.service";
 import { ServiceCardComponent } from '../service-card/service-card.component';
@@ -87,50 +87,47 @@ export class ServiceListComponent implements OnInit {
     this.loadServices();
   }
 
-  toggleServiceStatus(service: Service, event: Event): void {
-    event.stopPropagation();
-
-    if (service.actif) {
-      if (confirm(`Êtes-vous sûr de vouloir désactiver le service "${service.nom}" ?`)) {
-        this.serviceService.deactivateService(service.id).subscribe({
-          error: (error) => {
-            console.error('Erreur lors de la désactivation:', error);
-          }
-        });
-      }
-    } else {
-      this.serviceService.activateService(service.id).subscribe({
-        error: (error) => {
-          console.error('Erreur lors de l\'activation:', error);
-        }
-      });
-    }
-  }
-
-  viewService(service: Service): void {
-    this.router.navigate(['/services', service.id]);
-  }
-
-  editService(service: Service, event: Event): void {
-    event.stopPropagation();
-    this.router.navigate(['/services', service.id, 'edit']);
-  }
-
   createService(): void {
     this.router.navigate(['/services/new']);
   }
 
-  duplicateService(service: Service, event: Event): void {
+  editService(service: Service): void {
+    this.router.navigate(['/services', service.id, 'edit']);
+  }
+
+  onCardEdit(service: Service, event: MouseEvent): void {
     event.stopPropagation();
+    this.editService(service);
+  }
+
+  onCardDuplicate(service: Service, event: MouseEvent): void {
+    event.stopPropagation();
+    this.duplicateService(service);
+  }
+
+  onCardToggle(service: Service, event: MouseEvent): void {
+    event.stopPropagation();
+    this.toggleServiceStatus(service, event);
+  }
+
+  duplicateService(service: Service): void {
+    const extractAmount = (value: MoneyAmount | number | undefined): number => {
+      if (!value) return 0;
+      if (typeof value === 'object' && 'amount' in value) {
+        return value.amount;
+      }
+      return value;
+    };
+
     const newService = {
       nom: `${service.nom} (copie)`,
       description: service.description,
       type: service.type.value,
-      tarifHoraire: service.tarification.tarifHoraire,
-      tarifFixe: service.tarification.tarifFixe,
+      tarifHoraire: extractAmount(service.tarification.tarifHoraire),
+      tarifFixe: extractAmount(service.tarification.tarifFixe),
       majorationUrgence: service.tarification.majorationUrgence,
       majorationWeekend: service.tarification.majorationWeekend,
-      fraisDeplacement: service.tarification.fraisDeplacement
+      fraisDeplacement: extractAmount(service.tarification.fraisDeplacement)
     };
 
     this.serviceService.createService(newService).subscribe({
@@ -143,33 +140,42 @@ export class ServiceListComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors de la duplication:', error);
+        this.notificationService.error(
+          'Erreur',
+          'Impossible de dupliquer le service'
+        );
       }
     });
   }
 
-  calculateEstimate(service: Service, event: Event): void {
+  toggleServiceStatus(service: Service, event: MouseEvent): void {
+    const action = service.actif ? 'deactivateService' : 'activateService';
+    this.serviceService[action](service.id).subscribe({
+      next: () => {
+        this.notificationService.success(
+          'Statut modifié',
+          `Le service a été ${service.actif ? 'désactivé' : 'activé'}`
+        );
+        this.loadServices();
+      },
+      error: (error) => {
+        console.error('Erreur lors du changement de statut:', error);
+        this.notificationService.error(
+          'Erreur',
+          'Impossible de modifier le statut du service'
+        );
+      }
+    });
+  }
+
+  onCardEstimate(service: Service, event: MouseEvent): void {
     event.stopPropagation();
     this.router.navigate(['/services', service.id, 'estimate']);
   }
 
-  onCardEdit(service: Service): void {
-    this.editService(service, new Event('click'));
-  }
-
-  onCardToggle(service: Service): void {
-    this.toggleServiceStatus(service, new Event('click'));
-  }
-
-  onCardDuplicate(service: Service): void {
-    this.duplicateService(service, new Event('click'));
-  }
-
-  onCardEstimate(service: Service): void {
-    this.calculateEstimate(service, new Event('click'));
-  }
-
-  onCardSelect(serviceId: string): void {
-    this.toggleServiceSelection(serviceId, new Event('click'));
+  onCardSelect(serviceId: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.toggleServiceSelection(serviceId, event);
   }
 
   toggleViewMode(): void {
@@ -280,12 +286,21 @@ export class ServiceListComponent implements OnInit {
     return pages;
   }
 
-  formatPrice(price?: number): string {
-    if (!price) return '-';
+  formatPrice(price?: MoneyAmount | number): string {
+    let value: number | undefined;
+
+    if (price && typeof price === 'object' && 'amount' in price) {
+      value = price.amount;
+    } else if (typeof price === 'number') {
+      value = price;
+    }
+
+    if (!value) return '-';
+
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
-    }).format(price);
+    }).format(value);
   }
 
   getServiceTypeIcon(type: string): string {
