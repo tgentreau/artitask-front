@@ -1,77 +1,10 @@
 <div class="min-h-screen bg-gray-50">
-  <!-- Header avec navigation -->
-  <div class="bg-white shadow-sm border-b">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          <button
-            (click)="router.navigate(['/interventions'])"
-            class="text-gray-600 hover:text-gray-900">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-          </button>
-          <h1 class="text-2xl font-bold text-gray-900">Détail de l'intervention</h1>
-        </div>
-
-        @if (intervention()) {
-          <div class="flex items-center space-x-3">
-            @if (canStart()) {
-              <button
-                (click)="startIntervention()"
-                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Démarrer
-              </button>
-            }
-            @if (canPause()) {
-              <button
-                (click)="pauseIntervention()"
-                class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Pause
-              </button>
-            }
-            @if (canResume()) {
-              <button
-                (click)="resumeIntervention()"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Reprendre
-              </button>
-            }
-            @if (canComplete()) {
-              <button
-                (click)="openCompleteModal()"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Terminer
-              </button>
-            }
-            <button
-              (click)="editIntervention()"
-              class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
-            </button>
-          </div>
-        }
-      </div>
+  @if (loading()) {
+    <div class="flex justify-center items-center min-h-screen">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
-  </div>
+  }
 
-  <!-- Message d'erreur -->
   @if (error()) {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -80,92 +13,79 @@
     </div>
   }
 
-  <!-- Chargement -->
-  @if (loading()) {
-    <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    </div>
-  }
-
-  <!-- Contenu principal -->
   @if (intervention() && !loading()) {
+    <div class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <button
+              (click)="router.navigate(['/interventions'])"
+              class="text-gray-600 hover:text-gray-900">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              </svg>
+            </button>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">
+                Intervention #{{ intervention()!.id.substring(0, 8) }}
+              </h1>
+              <div class="flex items-center gap-4 mt-2">
+                <span [class]="'px-3 py-1 rounded-full text-xs font-semibold ' + getStatusClass(intervention()!.status.value)">
+                  {{ intervention()!.status.label }}
+                </span>
+                @if (intervention()!.priority.level >= 3) {
+                  <span class="text-red-600 font-semibold">URGENT 🔴</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            @if (canStart()) {
+              <button
+                (click)="startIntervention()"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Démarrer
+              </button>
+            }
+
+            @if (canPause()) {
+              <button
+                (click)="pauseIntervention()"
+                class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                Pause
+              </button>
+            }
+
+            @if (canResume()) {
+              <button
+                (click)="resumeIntervention()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Reprendre
+              </button>
+            }
+
+            @if (canComplete()) {
+              <button
+                (click)="openCompleteModal()"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Terminer
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <!-- Colonne principale (2/3) -->
         <div class="lg:col-span-2 space-y-6">
-
-          <!-- Informations générales -->
+          <!-- Informations principales -->
           <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations générales</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Informations principales</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-500">Statut</label>
-                <div class="mt-1">
-                  @switch (intervention()!.status.value) {
-                    @case ('planned') {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                    @case ('in_progress') {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                    @case ('paused') {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                    @case ('completed') {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                    @case ('cancelled') {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                    @default {
-                      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {{ intervention()!.status.label }}
-                      </span>
-                    }
-                  }
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-500">Priorité</label>
-                <div class="mt-1 flex items-center">
-                  @switch (intervention()!.priority.color) {
-                    @case ('green') {
-                      <span class="font-medium text-green-600">{{ intervention()!.priority.label }}</span>
-                    }
-                    @case ('yellow') {
-                      <span class="font-medium text-yellow-600">{{ intervention()!.priority.label }}</span>
-                    }
-                    @case ('red') {
-                      <span class="font-medium text-red-600">{{ intervention()!.priority.label }}</span>
-                    }
-                    @default {
-                      <span class="font-medium text-gray-600">{{ intervention()!.priority.label }}</span>
-                    }
-                  }
-                  @if (intervention()!.priority.level >= 3) {
-                    <span class="ml-2 text-red-600 font-bold">URGENT</span>
-                  }
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-500">Date d'intervention</label>
-                <p class="mt-1 text-sm text-gray-900">{{ formatDate(intervention()!.dateIntervention) }}</p>
-              </div>
-
               <div>
                 <label class="block text-sm font-medium text-gray-500">Client</label>
                 <p class="mt-1 text-sm text-gray-900">Client #{{ intervention()!.clientId.substring(0, 8) }}</p>
@@ -176,63 +96,72 @@
                 <p class="mt-1 text-sm text-gray-900">Service #{{ intervention()!.serviceId.substring(0, 8) }}</p>
               </div>
 
-              @if (intervention()!.location) {
-                <div>
-                  <label class="block text-sm font-medium text-gray-500">Adresse</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ intervention()!.location.adresse }}</p>
-                </div>
-              }
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Date d'intervention</label>
+                <p class="mt-1 text-sm text-gray-900">{{ formatDate(intervention()!.dateIntervention) }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Priorité</label>
+                <p [class]="'mt-1 text-sm font-semibold ' + getPriorityClass(intervention()!.priority.color)">
+                  {{ intervention()!.priority.label }}
+                </p>
+              </div>
             </div>
 
             <div class="mt-4">
               <label class="block text-sm font-medium text-gray-500">Description de la demande</label>
               <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ intervention()!.descriptionDemande }}</p>
             </div>
+
+            @if (intervention()!.location) {
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-500">Localisation</label>
+                <p class="mt-1 text-sm text-gray-900">{{ intervention()!.location.adresse }}</p>
+                @if (intervention()!.location.coordonnees) {
+                  <p class="mt-1 text-xs text-gray-500">
+                    GPS: {{ intervention()!.location.coordonnees.latitude }}, {{ intervention()!.location.coordonnees.longitude }}
+                  </p>
+                }
+              </div>
+            }
           </div>
 
           <!-- Suivi du temps -->
-          @if (intervention()!.timeTracking) {
-            <div class="bg-white shadow-md rounded-lg p-6">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Suivi du temps</h2>
+          <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Suivi du temps</h2>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-500">Début</label>
-                  <p class="mt-1 text-sm text-gray-900">
-                    @if (intervention()!.timeTracking.heureDebut) {
-                      {{ formatDate(intervention()!.timeTracking.heureDebut) }}
-                    } @else {
-                      Non démarré
-                    }
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-500">Fin</label>
-                  <p class="mt-1 text-sm text-gray-900">
-                    @if (intervention()!.timeTracking.heureFin) {
-                      {{ formatDate(intervention()!.timeTracking.heureFin) }}
-                    } @else {
-                      En cours
-                    }
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-500">Durée totale</label>
-                  <p class="mt-1 text-sm text-gray-900 font-semibold">
-                    {{ intervention()!.timeTracking.formattedDuration }}
-                  </p>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Début</label>
+                <p class="mt-1 text-sm text-gray-900">
+                  @if (intervention()!.timeTracking.heureDebut) {
+                    {{ formatTime(intervention()!.timeTracking.heureDebut) }}
+                  } @else {
+                    Non commencé
+                  }
+                </p>
               </div>
 
-              @if (intervention()!.timeTracking.isPaused) {
-                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p class="text-sm text-yellow-800">⏸️ Intervention actuellement en pause</p>
-                </div>
-              }
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Fin</label>
+                <p class="mt-1 text-sm text-gray-900">
+                  @if (intervention()!.timeTracking.heureFin) {
+                    {{ formatTime(intervention()!.timeTracking.heureFin) }}
+                  } @else {
+                    En cours
+                  }
+                </p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Durée totale</label>
+                <p class="mt-1 text-sm text-gray-900">
+                  {{ formatDuration(intervention()!.timeTracking.totalHours) }}
+                </p>
+              </div>
             </div>
-          }
+          </div>
 
           <!-- Photos -->
           <div class="bg-white shadow-md rounded-lg p-6">
@@ -241,75 +170,42 @@
               <div class="flex gap-2">
                 <button
                   (click)="openPhotoModal('before')"
-                  class="text-sm text-blue-600 hover:text-blue-900">
+                  class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                   + Avant
                 </button>
                 <button
                   (click)="openPhotoModal('during')"
-                  class="text-sm text-blue-600 hover:text-blue-900">
+                  class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                   + Pendant
                 </button>
                 <button
                   (click)="openPhotoModal('after')"
-                  class="text-sm text-blue-600 hover:text-blue-900">
+                  class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                   + Après
                 </button>
               </div>
             </div>
 
             <div class="space-y-4">
-              <!-- Photos avant -->
-              @if (getPhotosByType('before').length > 0) {
-                <div>
-                  <h3 class="text-sm font-medium text-gray-700 mb-2">Avant l'intervention</h3>
-                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    @for (photo of getPhotosByType('before'); track photo.id) {
-                      <div class="relative group">
-                        <img [src]="photo.url" [alt]="photo.description || 'Photo avant'"
-                             class="w-full h-32 object-cover rounded-lg">
-                        @if (photo.description) {
-                          <p class="text-xs text-gray-600 mt-1">{{ photo.description }}</p>
-                        }
-                      </div>
-                    }
+              @for (type of ['before', 'during', 'after']; track type) {
+                @if (getPhotosByType(type).length > 0) {
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">{{ getPhotoTypeLabel(type) }}</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                      @for (photo of getPhotosByType(type); track photo.id) {
+                        <div class="relative group">
+                          <img [src]="photo.url" [alt]="photo.description || 'Photo'"
+                               class="w-full h-24 object-cover rounded-lg">
+                          @if (photo.description) {
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
+                              {{ photo.description }}
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
-                </div>
-              }
-
-              <!-- Photos pendant -->
-              @if (getPhotosByType('during').length > 0) {
-                <div>
-                  <h3 class="text-sm font-medium text-gray-700 mb-2">Pendant l'intervention</h3>
-                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    @for (photo of getPhotosByType('during'); track photo.id) {
-                      <div class="relative group">
-                        <img [src]="photo.url" [alt]="photo.description || 'Photo pendant'"
-                             class="w-full h-32 object-cover rounded-lg">
-                        @if (photo.description) {
-                          <p class="text-xs text-gray-600 mt-1">{{ photo.description }}</p>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Photos après -->
-              @if (getPhotosByType('after').length > 0) {
-                <div>
-                  <h3 class="text-sm font-medium text-gray-700 mb-2">Après l'intervention</h3>
-                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    @for (photo of getPhotosByType('after'); track photo.id) {
-                      <div class="relative group">
-                        <img [src]="photo.url" [alt]="photo.description || 'Photo après'"
-                             class="w-full h-32 object-cover rounded-lg">
-                        @if (photo.description) {
-                          <p class="text-xs text-gray-600 mt-1">{{ photo.description }}</p>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
+                }
               }
 
               @if (intervention()!.photos.length === 0) {
@@ -321,24 +217,22 @@
           <!-- Rapport -->
           @if (intervention()!.report) {
             <div class="bg-white shadow-md rounded-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Rapport d'intervention</h2>
-                <button
-                  (click)="goToReport()"
-                  class="text-sm text-blue-600 hover:text-blue-900">
-                  Voir le rapport complet →
-                </button>
-              </div>
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Rapport d'intervention</h2>
 
-              <div class="space-y-3">
+              <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-500">Travaux effectués</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ intervention()!.report.travauxEffectues }}</p>
+                  <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ intervention()!.report.travauxEffectues }}</p>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-gray-500">Matériel utilisé</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ intervention()!.report.materielUtilise }}</p>
+                  <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ intervention()!.report.materielUtilise }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-500">Temps passé</label>
+                  <p class="mt-1 text-sm text-gray-900">{{ formatDuration(intervention()!.report.tempsPasse) }}</p>
                 </div>
 
                 @if (intervention()!.report.observations) {
@@ -352,7 +246,7 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-500">Signature client</label>
                     <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">
-                      <p class="text-xs text-gray-600">Signé le {{ formatDate(intervention()!.report.createdAt) }}</p>
+                      <p class="text-xs text-gray-600">Signé le {{ formatDate(intervention()!.report!.createdAt) }}</p>
                     </div>
                   </div>
                 }
@@ -363,7 +257,6 @@
 
         <!-- Colonne latérale (1/3) -->
         <div class="space-y-6">
-
           <!-- Coûts -->
           <div class="bg-white shadow-md rounded-lg p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Coûts</h2>
@@ -372,7 +265,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-500">Coût estimé</label>
                 <p class="mt-1 text-lg font-semibold text-gray-900">
-                  @if (intervention()!.coutEstime) {
+                  @if (intervention()!.coutEstime?.amount) {
                     {{ formatCurrency(intervention()!.coutEstime.amount) }}
                   } @else {
                     Non défini
@@ -383,7 +276,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-500">Coût réel</label>
                 <p class="mt-1 text-lg font-semibold text-gray-900">
-                  @if (intervention()!.coutReel) {
+                  @if (intervention()!.coutReel?.amount) {
                     {{ formatCurrency(intervention()!.coutReel.amount) }}
                   } @else {
                     Non défini
@@ -391,14 +284,16 @@
                 </p>
               </div>
 
-              @if (intervention()!.costVariance) {
+              @if (intervention()!.costVariance?.variance?.amount !== undefined) {
                 <div class="pt-3 border-t">
                   <label class="block text-sm font-medium text-gray-500">Écart</label>
-                  <p [class]="'mt-1 text-lg font-semibold ' + (intervention()!.costVariance.variance.amount >= 0 ? 'text-red-600' : 'text-green-600')">
-                    {{ formatCurrency(intervention()!.costVariance.variance.amount) }}
-                    <span class="text-sm">
-                      ({{ intervention()!.costVariance.percentage.toFixed(1) }}%)
-                    </span>
+                  <p [class]="'mt-1 text-lg font-semibold ' + (intervention()!.costVariance!.variance.amount >= 0 ? 'text-red-600' : 'text-green-600')">
+                    {{ formatCurrency(intervention()!.costVariance!.variance.amount) }}
+                    @if (intervention()!.costVariance!.percentage !== undefined) {
+                      <span class="text-sm">
+                        ({{ intervention()!.costVariance!.percentage.toFixed(1) }}%)
+                      </span>
+                    }
                   </p>
                 </div>
               }
@@ -410,7 +305,7 @@
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
             <div class="space-y-2">
-              @if (intervention()!.status.value === 'completed') {
+              @if (intervention()!.status.value === 'completed' && intervention()!.report) {
                 <button
                   (click)="goToReport()"
                   class="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
@@ -460,39 +355,6 @@
     </div>
   }
 
-  <!-- Modal Terminer l'intervention -->
-  @if (showCompleteModal()) {
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Terminer l'intervention</h3>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Coût réel (€)</label>
-          <input
-            type="number"
-            [(ngModel)]="coutReel"
-            step="0.01"
-            min="0"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <button
-            (click)="closeCompleteModal()"
-            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            Annuler
-          </button>
-          <button
-            (click)="completeIntervention()"
-            [disabled]="coutReel <= 0"
-            class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Terminer
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
   <!-- Modal Annuler l'intervention -->
   @if (showCancelModal()) {
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
@@ -501,26 +363,67 @@
 
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Raison de l'annulation (min. 10 caractères)
+            Raison de l'annulation <span class="text-red-500">*</span>
           </label>
           <textarea
             [(ngModel)]="cancelReason"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            placeholder="Expliquez pourquoi l'intervention est annulée..."></textarea>
+            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+            placeholder="Expliquez la raison de l'annulation (min 10 caractères)..."></textarea>
         </div>
 
-        <div class="flex justify-end gap-3">
+        <div class="flex justify-end gap-2">
           <button
             (click)="closeCancelModal()"
-            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            Retour
+            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Annuler
           </button>
           <button
             (click)="cancelIntervention()"
-            [disabled]="cancelReason.trim().length < 10"
-            class="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            [disabled]="cancelReason.length < 10 || loading()"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
             Confirmer l'annulation
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Terminer l'intervention -->
+  @if (showCompleteModal()) {
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Terminer l'intervention</h3>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Coût réel (€) <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="coutReel"
+            step="0.01"
+            min="0"
+            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+            placeholder="0.00">
+          @if (intervention()?.coutEstime?.amount !== undefined) {
+            <p class="mt-1 text-xs text-gray-500">
+              Estimation initiale : {{ formatCurrency(intervention()!.coutEstime!.amount) }}
+            </p>
+          }
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button
+            (click)="closeCompleteModal()"
+            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Annuler
+          </button>
+          <button
+            (click)="completeIntervention()"
+            [disabled]="coutReel <= 0 || loading()"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            Terminer l'intervention
           </button>
         </div>
       </div>
@@ -532,45 +435,44 @@
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          Ajouter une photo
-          @switch (photoType()) {
-            @case ('before') { avant l'intervention }
-            @case ('during') { pendant l'intervention }
-            @case ('after') { après l'intervention }
-          }
+          Ajouter une photo - {{ getPhotoTypeLabel(photoType()) }}
         </h3>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">URL de la photo *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              URL de la photo <span class="text-red-500">*</span>
+            </label>
             <input
               type="url"
               [(ngModel)]="photoUrl"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
               placeholder="https://...">
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description (optionnel)</label>
-            <textarea
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Description (optionnel)
+            </label>
+            <input
+              type="text"
               [(ngModel)]="photoDescription"
-              rows="2"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="Décrivez la photo..."></textarea>
+              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="Description de la photo...">
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-2 mt-6">
           <button
             (click)="closePhotoModal()"
-            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
             Annuler
           </button>
           <button
             (click)="addPhoto()"
-            [disabled]="!photoUrl.trim()"
-            class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Ajouter
+            [disabled]="!photoUrl.trim() || loading()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            Ajouter la photo
           </button>
         </div>
       </div>
