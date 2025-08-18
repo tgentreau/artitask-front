@@ -1,0 +1,434 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header avec titre et actions -->
+  <div class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Interventions</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            {{ totalItems() }} intervention(s) au total
+          </p>
+        </div>
+
+        <div class="flex items-center space-x-3 mt-4 sm:mt-0">
+          <!-- Bouton nouveau -->
+          <button
+            (click)="createIntervention()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Nouvelle intervention
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone des filtres -->
+  <div class="bg-white border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Barre de recherche -->
+        <div class="md:col-span-2">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchChange()"
+              placeholder="Rechercher une intervention..."
+              class="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-white border rounded-lg focus:outline-none focus:border-blue-500">
+            <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filtre statut -->
+        <div>
+          <select
+            [(ngModel)]="filterStatus"
+            (change)="onFilterChange()"
+            class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:outline-none focus:border-blue-500">
+            @for (option of statusOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Tri -->
+        <div>
+          <select
+            [(ngModel)]="sortBy"
+            (change)="onSortChange()"
+            class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:outline-none focus:border-blue-500">
+            @for (option of sortOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Filtres de date -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+          <input
+            type="date"
+            [(ngModel)]="filterDateStart"
+            (change)="onFilterChange()"
+            class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+          <input
+            type="date"
+            [(ngModel)]="filterDateEnd"
+            (change)="onFilterChange()"
+            class="w-full px-4 py-2 text-gray-700 bg-white border rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="md:col-span-2 flex items-end">
+          <button
+            (click)="toggleSortOrder()"
+            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              @if (sortOrder() === 'ASC') {
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+              } @else {
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/>
+              }
+            </svg>
+            {{ sortOrder() === 'ASC' ? 'Croissant' : 'Décroissant' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'erreur -->
+  @if (error()) {
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ error() }}
+      </div>
+    </div>
+  }
+
+  <!-- Chargement -->
+  @if (loading()) {
+    <div class="flex justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  <!-- Liste des interventions (Desktop) -->
+  @if (!loading()) {
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="hidden md:block">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Client
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Statut
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Priorité
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Coût estimé
+              </th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              @for (intervention of interventions(); track intervention.id) {
+                <tr class="hover:bg-gray-50 cursor-pointer" (click)="viewIntervention(intervention.id)">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ formatDate(intervention.dateIntervention) }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">Client #{{ intervention.clientId.substring(0, 8) }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900 truncate max-w-xs">
+                      {{ intervention.descriptionDemande }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @switch (intervention.status.status) {
+                      @case ('planned') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('in_progress') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('paused') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('completed') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('cancelled') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @default {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                    }
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @switch (intervention.priority.color) {
+                      @case ('green') {
+                        <span class="font-medium text-green-600">{{ intervention.priority.label }}</span>
+                      }
+                      @case ('yellow') {
+                        <span class="font-medium text-yellow-600">{{ intervention.priority.label }}</span>
+                      }
+                      @case ('red') {
+                        <span class="font-medium text-red-600">{{ intervention.priority.label }}</span>
+                      }
+                      @default {
+                        <span class="font-medium text-gray-600">{{ intervention.priority.label }}</span>
+                      }
+                    }
+                    @if (intervention.isUrgent) {
+                      <span class="ml-2 text-red-600">🔴</span>
+                    }
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @if (intervention.coutEstime) {
+                      <div class="text-sm text-gray-900">{{ formatCurrency(intervention.coutEstime.amount) }}</div>
+                    } @else {
+                      <div class="text-sm text-gray-400">-</div>
+                    }
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end gap-2">
+                      @if (intervention.status.status === 'planned') {
+                        <button
+                          (click)="startIntervention(intervention.id); $event.stopPropagation()"
+                          class="text-green-600 hover:text-green-900"
+                          title="Démarrer">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        </button>
+                      }
+                      @if (intervention.status.status === 'in_progress') {
+                        <button
+                          (click)="completeIntervention(intervention.id); $event.stopPropagation()"
+                          class="text-blue-600 hover:text-blue-900"
+                          title="Terminer">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        </button>
+                      }
+                      <button
+                        (click)="editIntervention(intervention.id); $event.stopPropagation()"
+                        class="text-blue-600 hover:text-blue-900"
+                        title="Modifier">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+                      @if (intervention.status.status !== 'completed' && intervention.status.status !== 'cancelled') {
+                        <button
+                          (click)="cancelIntervention(intervention.id); $event.stopPropagation()"
+                          class="text-red-600 hover:text-red-900"
+                          title="Annuler">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                    Aucune intervention trouvée
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Liste des interventions (Mobile) -->
+        <div class="md:hidden">
+          @for (intervention of interventions(); track intervention.id) {
+            <div class="p-4 border-b border-gray-200" (click)="viewIntervention(intervention.id)">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    @switch (intervention.status.status) {
+                      @case ('planned') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('in_progress') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('paused') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('completed') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @case ('cancelled') {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                      @default {
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {{ intervention.status.label }}
+                        </span>
+                      }
+                    }
+                    @if (intervention.isUrgent) {
+                      <span class="text-red-600 text-xs font-semibold">URGENT</span>
+                    }
+                  </div>
+                  <h3 class="text-sm font-medium text-gray-900">
+                    {{ formatDate(intervention.dateIntervention) }}
+                  </h3>
+                  <p class="text-sm text-gray-500 mt-1">
+                    Client #{{ intervention.clientId.substring(0, 8) }}
+                  </p>
+                </div>
+                @if (intervention.coutEstime) {
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ formatCurrency(intervention.coutEstime.amount) }}
+                  </div>
+                }
+              </div>
+
+              <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                {{ intervention.descriptionDemande }}
+              </p>
+
+              <div class="flex justify-between items-center">
+                @switch (intervention.priority.color) {
+                  @case ('green') {
+                    <span class="text-sm font-medium text-green-600">{{ intervention.priority.label }}</span>
+                  }
+                  @case ('yellow') {
+                    <span class="text-sm font-medium text-yellow-600">{{ intervention.priority.label }}</span>
+                  }
+                  @case ('red') {
+                    <span class="text-sm font-medium text-red-600">{{ intervention.priority.label }}</span>
+                  }
+                  @default {
+                    <span class="text-sm font-medium text-gray-600">{{ intervention.priority.label }}</span>
+                  }
+                }
+                <div class="flex gap-2">
+                  @if (intervention.status.status === 'planned') {
+                    <button
+                      (click)="startIntervention(intervention.id); $event.stopPropagation()"
+                      class="text-green-600 hover:text-green-900 text-sm">
+                      Démarrer
+                    </button>
+                  }
+                  @if (intervention.status.status === 'in_progress') {
+                    <button
+                      (click)="completeIntervention(intervention.id); $event.stopPropagation()"
+                      class="text-blue-600 hover:text-blue-900 text-sm">
+                      Terminer
+                    </button>
+                  }
+                  <button
+                    (click)="editIntervention(intervention.id); $event.stopPropagation()"
+                    class="text-blue-600 hover:text-blue-900 text-sm">
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="p-8 text-center text-gray-500">
+              Aucune intervention trouvée
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            Page {{ currentPage() }} sur {{ totalPages() }}
+          </div>
+          <div class="flex gap-2">
+            <button
+              (click)="onPageChange(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              Précédent
+            </button>
+
+            @for (page of [].constructor(totalPages()); let i = $index; track i) {
+              @if (i + 1 === 1 || i + 1 === totalPages() || (i + 1 >= currentPage() - 1 && i + 1 <= currentPage() + 1)) {
+                <button
+                  (click)="onPageChange(i + 1)"
+                  [class.bg-blue-600]="i + 1 === currentPage()"
+                  [class.text-white]="i + 1 === currentPage()"
+                  [class.bg-white]="i + 1 !== currentPage()"
+                  [class.text-gray-700]="i + 1 !== currentPage()"
+                  class="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+                  {{ i + 1 }}
+                </button>
+              } @else if (i + 1 === currentPage() - 2 || i + 1 === currentPage() + 2) {
+                <span class="px-2 py-2 text-gray-500">...</span>
+              }
+            }
+
+            <button
+              (click)="onPageChange(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+              Suivant
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -7,16 +7,6 @@ export const routes: Routes = [
     loadChildren: () => import('./core/auth/auth.routes').then(m => m.authRoutes)
   },
   {
-    path: 'dashboard',
-    loadComponent: () => import('./domain/intervention/pages/intervention-dashboard.component').then(m => m.InterventionDashboardComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'interventions',
-    loadComponent: () => import('./domain/intervention/pages/intervention-dashboard.component').then(m => m.InterventionDashboardComponent),
-    canActivate: [authGuard]
-  },
-  {
     path: 'clients',
     loadComponent: () => import('./domain/client/components/client-list/client-list.component').then(m => m.ClientListComponent),
     canActivate: [authGuard]
@@ -34,6 +24,11 @@ export const routes: Routes = [
   {
     path: 'services',
     loadChildren: () => import('./domain/service/service.routes').then(m => m.serviceRoutes),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'interventions',
+    loadChildren: () => import('./domain/intervention/intervention.routes').then(m => m.interventionsRoutes),
     canActivate: [authGuard]
   },
   {
