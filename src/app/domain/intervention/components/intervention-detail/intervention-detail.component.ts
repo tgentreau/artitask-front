@@ -1,14 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { InterventionService } from '../../services/intervention.service';
 import { InterventionResponse } from '../../models/intervention.model';
-import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-intervention-detail',
-  imports: [
-    FormsModule
-  ],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './intervention-detail.component.html'
 })
 export class InterventionDetailComponent implements OnInit {
@@ -34,7 +34,9 @@ export class InterventionDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.interventionId = this.route.snapshot.paramMap.get('id')!;
-    this.loadIntervention();
+    if (this.interventionId) {
+      this.loadIntervention();
+    }
   }
 
   loadIntervention(): void {
@@ -42,13 +44,9 @@ export class InterventionDetailComponent implements OnInit {
     this.error.set(null);
 
     this.interventionService.getById(this.interventionId).subscribe({
-      next: (intervention) => {
-        this.intervention.set(intervention);
+      next: (data: InterventionResponse) => {
+        this.intervention.set(data);
         this.loading.set(false);
-
-        if (intervention.coutEstime) {
-          this.coutReel = intervention.coutEstime.amount;
-        }
       },
       error: (err) => {
         this.error.set('Erreur lors du chargement de l\'intervention');
@@ -59,31 +57,28 @@ export class InterventionDetailComponent implements OnInit {
   }
 
   canStart(): boolean {
-    const intervention = this.intervention();
-    return intervention?.status.value === 'planned';
-  }
-
-  canPause(): boolean {
-    const intervention = this.intervention();
-    return intervention?.status.value === 'in_progress';
-  }
-
-  canResume(): boolean {
-    const intervention = this.intervention();
-    return intervention?.status.value === 'paused';
+    const status = this.intervention()?.status.value;
+    return status === 'planned';
   }
 
   canComplete(): boolean {
-    const intervention = this.intervention();
-    return intervention?.status.value === 'in_progress' ||
-      intervention?.status.value === 'paused';
+    const status = this.intervention()?.status.value;
+    return status === 'in_progress' || status === 'paused';
   }
 
   canCancel(): boolean {
-    const intervention = this.intervention();
-    return intervention?.status.value === 'planned' ||
-      intervention?.status.value === 'in_progress' ||
-      intervention?.status.value === 'paused';
+    const status = this.intervention()?.status.value;
+    return status === 'planned' || status === 'in_progress' || status === 'paused';
+  }
+
+  canPause(): boolean {
+    const status = this.intervention()?.status.value;
+    return status === 'in_progress';
+  }
+
+  canResume(): boolean {
+    const status = this.intervention()?.status.value;
+    return status === 'paused';
   }
 
   startIntervention(): void {
@@ -93,7 +88,7 @@ export class InterventionDetailComponent implements OnInit {
         this.loadIntervention();
       },
       error: (err) => {
-        this.error.set('Erreur lors du démarrage');
+        this.error.set('Erreur lors du démarrage de l\'intervention');
         this.loading.set(false);
         console.error('Error starting intervention:', err);
       }
@@ -129,6 +124,8 @@ export class InterventionDetailComponent implements OnInit {
   }
 
   openCompleteModal(): void {
+    const estimatedCost = this.intervention()?.coutEstime?.amount;
+    this.coutReel = estimatedCost || 0;
     this.showCompleteModal.set(true);
   }
 
@@ -148,10 +145,10 @@ export class InterventionDetailComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.closeCompleteModal();
-        this.router.navigate(['/interventions', this.interventionId, 'report']);
+        this.loadIntervention();
       },
       error: (err) => {
-        this.error.set('Erreur lors de la finalisation');
+        this.error.set('Erreur lors de la complétion de l\'intervention');
         this.loading.set(false);
         console.error('Error completing intervention:', err);
       }
@@ -165,13 +162,12 @@ export class InterventionDetailComponent implements OnInit {
 
   closeCancelModal(): void {
     this.showCancelModal.set(false);
-    this.cancelReason = '';
   }
 
   cancelIntervention(): void {
     const reason = this.cancelReason.trim();
     if (reason.length < 10) {
-      this.error.set('La raison doit faire au moins 10 caractères');
+      this.error.set('La raison doit contenir au moins 10 caractères');
       return;
     }
 
@@ -233,8 +229,12 @@ export class InterventionDetailComponent implements OnInit {
     this.router.navigate(['/interventions', this.interventionId, 'edit']);
   }
 
-  formatDate(date: Date | string): string {
+  formatDate(date: Date | string | null | undefined): string {
+    if (!date) return '-';
+
     const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+
     return d.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: '2-digit',
@@ -245,14 +245,81 @@ export class InterventionDetailComponent implements OnInit {
     });
   }
 
-  formatCurrency(amount: number): string {
+  formatShortDate(date: Date | string | null | undefined): string {
+    if (!date) return '-';
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+
+    return d.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  formatTime(date: Date | string | null | undefined): string {
+    if (!date) return '-';
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+
+    return d.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatCurrency(amount: number | null | undefined): string {
+    if (amount === null || amount === undefined) return '-';
+
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
     }).format(amount);
   }
 
+  formatDuration(hours: number): string {
+    if (!hours || hours === 0) return '-';
+
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+  }
+
+  getStatusClass(status: string): string {
+    const statusClasses: Record<string, string> = {
+      'planned': 'bg-blue-100 text-blue-800',
+      'in_progress': 'bg-yellow-100 text-yellow-800',
+      'paused': 'bg-gray-100 text-gray-800',
+      'completed': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800'
+    };
+    return statusClasses[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  getPriorityClass(color: string): string {
+    const colorClasses: Record<string, string> = {
+      'green': 'text-green-600',
+      'yellow': 'text-yellow-600',
+      'red': 'text-red-600'
+    };
+    return colorClasses[color] || 'text-gray-600';
+  }
+
   getPhotosByType(type: string) {
     return this.intervention()?.photos.filter(p => p.type === type) || [];
+  }
+
+  getPhotoTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      'before': 'Avant',
+      'during': 'Pendant',
+      'after': 'Après'
+    };
+    return labels[type] || type;
   }
 }

@@ -1,13 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { InterventionService } from '../../services/intervention.service';
 import { CreateInterventionRequest, InterventionResponse } from '../../models/intervention.model';
-import {ServiceService} from "../../../service/services/service.service";
-import {ClientService} from "../../../client/services/client.service";
+import { ServiceService } from '../../../service/services/service.service';
+import { ClientService } from '../../../client/services/client.service';
 
 @Component({
   selector: 'app-intervention-form',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './intervention-form.component.html'
 })
 export class InterventionFormComponent implements OnInit {
@@ -116,7 +119,6 @@ export class InterventionFormComponent implements OnInit {
           longitude: intervention.location?.coordonnees?.longitude,
           coutEstime: intervention.coutEstime?.amount
         });
-
         this.loading.set(false);
       },
       error: (err) => {
@@ -129,53 +131,31 @@ export class InterventionFormComponent implements OnInit {
 
   loadClients(): void {
     this.clientService.getClients(1, 100).subscribe({
-      next: (response) => {
-        this.clients.set(response.items);
+      next: (result) => {
+        this.clients.set(result.items || []);
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des clients:', err);
+        console.error('Error loading clients:', err);
       }
     });
   }
 
   loadServices(): void {
     this.serviceService.getServices(1, 100).subscribe({
-      next: (response) => {
-        this.services.set(response.data.items);
+      next: (response: any) => {
+        this.services.set(response.data?.items || []);
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des services:', err);
+        console.error('Error loading services:', err);
       }
     });
-  }
-
-  getCurrentLocation(): void {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          this.interventionForm.patchValue({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            useGPS: true
-          });
-        },
-        (error) => {
-          this.error.set('Impossible d\'obtenir votre position');
-          console.error('Geolocation error:', error);
-        }
-      );
-    } else {
-      this.error.set('La géolocalisation n\'est pas supportée par votre navigateur');
-    }
   }
 
   onSubmit(): void {
     if (this.interventionForm.invalid) {
       Object.keys(this.interventionForm.controls).forEach(key => {
         const control = this.interventionForm.get(key);
-        if (control?.invalid) {
-          control.markAsTouched();
-        }
+        control?.markAsTouched();
       });
       return;
     }
@@ -184,22 +164,20 @@ export class InterventionFormComponent implements OnInit {
     this.error.set(null);
 
     const formValue = this.interventionForm.value;
-    const dateTime = new Date(`${formValue.dateIntervention}T${formValue.heureIntervention}:00`);
+    const dateTime = new Date(formValue.dateIntervention + 'T' + formValue.heureIntervention);
 
     const request: CreateInterventionRequest = {
       clientId: formValue.clientId,
       serviceId: formValue.serviceId,
       dateIntervention: dateTime.toISOString(),
-      descriptionDemande: formValue.descriptionDemande.trim(),
+      descriptionDemande: formValue.descriptionDemande,
       urgence: formValue.urgence,
-      adresseIntervention: formValue.adresseIntervention?.trim(),
-      ...(formValue.useGPS && formValue.latitude && formValue.longitude && {
-        coordonneesGPS: {
-          latitude: formValue.latitude,
-          longitude: formValue.longitude
-        }
-      }),
-      ...(formValue.coutEstime && { coutEstime: formValue.coutEstime })
+      adresseIntervention: formValue.adresseIntervention,
+      coordonneesGPS: formValue.useGPS ? {
+        latitude: formValue.latitude,
+        longitude: formValue.longitude
+      } : undefined,
+      coutEstime: formValue.coutEstime
     };
 
     if (this.isEditMode()) {
@@ -243,5 +221,16 @@ export class InterventionFormComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  getFieldLength(fieldName: string): number {
+    const control = this.interventionForm.get(fieldName);
+    const value = control?.value;
+
+    if (typeof value === 'string') {
+      return value.length;
+    }
+
+    return 0;
   }
 }

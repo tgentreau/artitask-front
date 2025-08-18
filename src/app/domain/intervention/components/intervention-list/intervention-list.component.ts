@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { InterventionService } from '../../services/intervention.service';
 import {
   InterventionListItem,
@@ -9,6 +11,8 @@ import {
 
 @Component({
   selector: 'app-intervention-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './intervention-list.component.html'
 })
 export class InterventionListComponent implements OnInit {
@@ -19,18 +23,19 @@ export class InterventionListComponent implements OnInit {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  currentPage = signal<number>(1);
-  pageSize = signal<number>(20);
+  currentPage = 1;
+  pageSize = 20;
   totalItems = signal<number>(0);
-  totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
 
-  filterStatus = signal<string>('');
-  filterClientId = signal<string>('');
-  filterServiceId = signal<string>('');
-  filterDateStart = signal<string>('');
-  filterDateEnd = signal<string>('');
-  sortBy = signal<string>('date_intervention');
-  sortOrder = signal<'ASC' | 'DESC'>('DESC');
+  searchTerm = '';
+  filterStatus = '';
+  filterClientId = '';
+  filterServiceId = '';
+  filterDateStart = '';
+  filterDateEnd = '';
+  sortBy = 'date_intervention';
+  sortOrder: 'ASC' | 'DESC' = 'DESC';
 
   statusOptions = [
     { value: '', label: 'Tous les statuts' },
@@ -48,6 +53,22 @@ export class InterventionListComponent implements OnInit {
     { value: 'created_at', label: 'Date de création' }
   ];
 
+  displayedInterventions = computed(() => {
+    const allInterventions = this.interventions();
+
+    if (!this.searchTerm || this.searchTerm.length < 2) {
+      return allInterventions;
+    }
+
+    const searchLower = this.searchTerm.toLowerCase();
+    return allInterventions.filter(intervention =>
+      intervention.descriptionDemande.toLowerCase().includes(searchLower) ||
+      intervention.clientId.toLowerCase().includes(searchLower) ||
+      intervention.serviceId?.toLowerCase().includes(searchLower) ||
+      intervention.status.label.toLowerCase().includes(searchLower)
+    );
+  });
+
   ngOnInit(): void {
     this.loadInterventions();
   }
@@ -57,15 +78,15 @@ export class InterventionListComponent implements OnInit {
     this.error.set(null);
 
     const query: ListInterventionsQuery = {
-      page: this.currentPage(),
-      limit: this.pageSize(),
-      ...(this.filterStatus() && { status: this.filterStatus() }),
-      ...(this.filterClientId() && { clientId: this.filterClientId() }),
-      ...(this.filterServiceId() && { serviceId: this.filterServiceId() }),
-      ...(this.filterDateStart() && { dateStart: this.filterDateStart() }),
-      ...(this.filterDateEnd() && { dateEnd: this.filterDateEnd() }),
-      sortBy: this.sortBy(),
-      sortOrder: this.sortOrder()
+      page: this.currentPage,
+      limit: this.pageSize,
+      ...(this.filterStatus && { status: this.filterStatus }),
+      ...(this.filterClientId && { clientId: this.filterClientId }),
+      ...(this.filterServiceId && { serviceId: this.filterServiceId }),
+      ...(this.filterDateStart && { dateStart: this.filterDateStart }),
+      ...(this.filterDateEnd && { dateEnd: this.filterDateEnd }),
+      sortBy: this.sortBy,
+      sortOrder: this.sortOrder
     };
 
     this.interventionService.list(query).subscribe({
@@ -82,8 +103,14 @@ export class InterventionListComponent implements OnInit {
     });
   }
 
+  onSearch(): void {
+    if (this.searchTerm.length === 0 || this.searchTerm.length >= 2) {
+      this.currentPage = 1;
+    }
+  }
+
   onFilterChange(): void {
-    this.currentPage.set(1);
+    this.currentPage = 1;
     this.loadInterventions();
   }
 
@@ -91,14 +118,38 @@ export class InterventionListComponent implements OnInit {
     this.loadInterventions();
   }
 
+  sort(field: string): void {
+    if (this.sortBy === field) {
+      this.sortOrder = this.sortOrder === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+      this.sortBy = field;
+      this.sortOrder = 'ASC';
+    }
+    this.loadInterventions();
+  }
+
   onPageChange(page: number): void {
-    this.currentPage.set(page);
+    this.currentPage = page;
     this.loadInterventions();
   }
 
   toggleSortOrder(): void {
-    this.sortOrder.set(this.sortOrder() === 'ASC' ? 'DESC' : 'ASC');
+    this.sortOrder = this.sortOrder === 'ASC' ? 'DESC' : 'ASC';
     this.loadInterventions();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadInterventions();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages()) {
+      this.currentPage++;
+      this.loadInterventions();
+    }
   }
 
   viewIntervention(id: string): void {
@@ -164,8 +215,12 @@ export class InterventionListComponent implements OnInit {
     return colorClasses[color] || 'text-secondary';
   }
 
-  formatDate(date: Date | string): string {
+  formatDate(date: Date | string | null | undefined): string {
+    if (!date) return '-';
+
     const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+
     return d.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -175,7 +230,9 @@ export class InterventionListComponent implements OnInit {
     });
   }
 
-  formatCurrency(amount: number): string {
+  formatCurrency(amount: number | null | undefined): string {
+    if (amount === null || amount === undefined) return '-';
+
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
