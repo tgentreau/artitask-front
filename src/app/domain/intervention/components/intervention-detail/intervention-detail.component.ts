@@ -6,7 +6,6 @@ import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-intervention-detail',
-  standalone: true,
   imports: [
     FormsModule
   ],

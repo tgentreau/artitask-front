@@ -1,20 +1,20 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { InterventionService } from '../../services/intervention.service';
 import { CreateInterventionRequest, InterventionResponse } from '../../models/intervention.model';
+import {ServiceService} from "../../../service/services/service.service";
+import {ClientService} from "../../../client/services/client.service";
 
 @Component({
   selector: 'app-intervention-form',
-  imports: [
-    ReactiveFormsModule
-  ],
-  standalone: true,
   templateUrl: './intervention-form.component.html'
 })
 export class InterventionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private interventionService = inject(InterventionService);
+  private serviceService = inject(ServiceService);
+  private clientService = inject(ClientService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -128,17 +128,25 @@ export class InterventionFormComponent implements OnInit {
   }
 
   loadClients(): void {
-    // TODO: Implémenter le chargement des clients
-    // this.clientService.getClients().subscribe(clients => {
-    //   this.clients.set(clients);
-    // });
+    this.clientService.getClients(1, 100).subscribe({
+      next: (response) => {
+        this.clients.set(response.items);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des clients:', err);
+      }
+    });
   }
 
   loadServices(): void {
-    // TODO: Implémenter le chargement des services
-    // this.serviceService.getServices().subscribe(services => {
-    //   this.services.set(services);
-    // });
+    this.serviceService.getServices(1, 100).subscribe({
+      next: (response) => {
+        this.services.set(response.data.items);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des services:', err);
+      }
+    });
   }
 
   getCurrentLocation(): void {

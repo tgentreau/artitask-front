@@ -6,13 +6,9 @@ import {
   ListInterventionsQuery,
   InterventionListResult
 } from '../../models/intervention.model';
-import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-intervention-list',
-  imports: [
-    FormsModule
-  ],
   templateUrl: './intervention-list.component.html'
 })
 export class InterventionListComponent implements OnInit {
