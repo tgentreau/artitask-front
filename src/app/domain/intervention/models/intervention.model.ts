@@ -83,7 +83,9 @@ export interface InterventionReportResponse {
 export interface InterventionResponse {
   id: string;
   clientId: string;
+  clientNom?: string;
   serviceId: string;
+  serviceNom?: string;
   status: InterventionStatus;
   dateIntervention: Date;
   descriptionDemande: string;
