@@ -45,11 +45,26 @@ export class DashboardService {
       { params: httpParams }
     ).pipe(
       map(response => {
-        console.log('Stats API Response:', response);
-        console.log('Stats data:', response.data);
-        console.log('Raw totalRevenue:', response.data?.totalRevenue);
-        console.log('Raw averageCost:', response.data?.averageCost);
-        return response.data
+        const data = response.data;
+
+        return {
+          ...data,
+          totalRevenue: typeof data.totalRevenue === 'string'
+            ? parseFloat(data.totalRevenue)
+            : (data.totalRevenue || 0),
+          averageCost: data.averageCost === null || data.averageCost === undefined
+            ? 0
+            : (typeof data.averageCost === 'string'
+              ? parseFloat(data.averageCost)
+              : data.averageCost),
+          total: Number(data.total) || 0,
+          completed: Number(data.completed) || 0,
+          cancelled: Number(data.cancelled) || 0,
+          inProgress: Number(data.inProgress) || 0,
+          planned: Number(data.planned) || 0,
+          averageDuration: Number(data.averageDuration) || 0,
+          completionRate: Number(data.completionRate) || 0,
+        };
       })
     );
   }

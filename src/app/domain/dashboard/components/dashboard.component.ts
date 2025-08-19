@@ -83,17 +83,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/clients', id]);
   }
 
-  formatCurrency(amount: number): string {
-    console.log('formatCurrency input:', amount);
-    console.log('formatCurrency type:', typeof amount);
-
-    if (isNaN(amount)) {
-      console.warn('Amount is NaN!');
+  formatCurrency(amount: number | null | undefined): string {
+    if (amount === null || amount === undefined) {
+      return '0,00 €';
+    }
+    const numericAmount = amount;
+    if (isNaN(numericAmount)) {
+      console.warn('formatCurrency: Invalid amount', amount);
+      return '0,00 €';
     }
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
+      currency: 'EUR',
+    }).format(numericAmount);
   }
 
   formatDate(date: Date | string): string {
