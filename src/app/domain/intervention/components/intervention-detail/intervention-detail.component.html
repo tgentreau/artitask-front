@@ -154,7 +154,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-500">Durée totale</label>
                 <p class="mt-1 text-sm text-gray-900">
-                  {{ formatDuration(intervention()!.timeTracking.totalHours) }}
+                  {{ intervention()!.timeTracking.formattedDuration }}
                 </p>
               </div>
             </div>
