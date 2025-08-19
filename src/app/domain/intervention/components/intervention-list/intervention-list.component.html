@@ -130,27 +130,28 @@
       <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="hidden md:block">
           <table class="min-w-full">
+            <caption class="sr-only">Liste des interventions</caption>
             <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Client
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Description
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Statut
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Priorité
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Coût estimé
               </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -238,6 +239,7 @@
                       @if (intervention.status.status === 'planned') {
                         <button
                           (click)="startIntervention(intervention.id); $event.stopPropagation()"
+                          [attr.aria-label]="'Démarrer l\'intervention'"
                           class="text-green-600 hover:text-green-900"
                           title="Démarrer">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,6 +251,7 @@
                       @if (intervention.status.status === 'in_progress') {
                         <button
                           (click)="completeIntervention(intervention.id); $event.stopPropagation()"
+                          [attr.aria-label]="'Terminer l\'intervention'"
                           class="text-blue-600 hover:text-blue-900"
                           title="Terminer">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,6 +262,7 @@
                       <button
                         (click)="editIntervention(intervention.id); $event.stopPropagation()"
                         class="p-2 text-yellow-600 hover:text-yellow-900"
+                        [attr.aria-label]="'Modifier l\'intervention'"
                         title="Modifier">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -288,7 +292,6 @@
           </table>
         </div>
 
-        <!-- Liste des interventions (Mobile) -->
         <div class="md:hidden">
           @for (intervention of displayedInterventions(); track intervention.id) {
             <div class="p-4 border-b border-gray-200" (click)="viewIntervention(intervention.id)">

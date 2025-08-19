@@ -1,5 +1,6 @@
+<a href="#main" class="sr-only focus:not-sr-only">Aller au contenu</a>
 <div class="min-h-screen bg-gray-100">
-  <nav class="bg-white shadow-sm border-b border-gray-200">
+  <nav class="bg-white shadow-sm border-b border-gray-200" aria-label="Navigation principale">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 justify-between">
         <div class="flex">
@@ -126,7 +127,7 @@
     }
   </nav>
 
-  <main class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+  <main id="main" class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
     <router-outlet></router-outlet>
     <app-notifications />
   </main>

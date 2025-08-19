@@ -13,7 +13,35 @@ import {
   selector: 'app-intervention-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './intervention-list.component.html'
+  templateUrl: './intervention-list.component.html',
+  styles: [
+    `
+      :focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        border: 0;
+      }
+
+      .sr-only:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+      }
+    `
+  ]
 })
 export class InterventionListComponent implements OnInit {
   private interventionService = inject(InterventionService);

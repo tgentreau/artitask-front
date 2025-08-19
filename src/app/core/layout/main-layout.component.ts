@@ -8,7 +8,35 @@ import {NotificationComponent} from "../../shared/components/notification/notifi
   selector: 'app-layout',
   standalone: true,
   imports: [CommonModule, RouterModule, RouterOutlet, NotificationComponent],
-  templateUrl: './main-layout.component.html'
+  templateUrl: './main-layout.component.html',
+  styles: [
+    `
+      :focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        border: 0;
+      }
+
+      .sr-only:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+      }
+    `
+  ]
 })
 export class MainLayoutComponent {
   protected authService = inject(AuthService);
