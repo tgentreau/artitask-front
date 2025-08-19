@@ -162,7 +162,11 @@
                     <div class="text-sm text-gray-900">{{ formatDate(intervention.dateIntervention) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">Client #{{ intervention.clientId.substring(0, 8) }}</div>
+                    @if (intervention.clientNom) {
+                      {{ intervention.clientNom }}
+                    } @else {
+                      Client #{{ intervention.clientId.substring(0, 8) }}
+                    }
                   </td>
                   <td class="px-6 py-4">
                     <div class="text-sm text-gray-900 truncate max-w-xs">
@@ -331,7 +335,11 @@
                     {{ formatDate(intervention.dateIntervention) }}
                   </h3>
                   <p class="text-sm text-gray-500 mt-1">
-                    Client #{{ intervention.clientId.substring(0, 8) }}
+                    @if (intervention.clientNom) {
+                      {{ intervention.clientNom }}
+                    } @else {
+                      Client #{{ intervention.clientId.substring(0, 8) }}
+                    }
                   </p>
                 </div>
                 @if (intervention.coutEstime) {

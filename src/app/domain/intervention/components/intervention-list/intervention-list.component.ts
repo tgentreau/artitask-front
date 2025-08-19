@@ -64,7 +64,9 @@ export class InterventionListComponent implements OnInit {
     return allInterventions.filter(intervention =>
       intervention.descriptionDemande.toLowerCase().includes(searchLower) ||
       intervention.clientId.toLowerCase().includes(searchLower) ||
+      intervention.clientNom?.toLowerCase().includes(searchLower) ||
       intervention.serviceId?.toLowerCase().includes(searchLower) ||
+      intervention.serviceNom?.toLowerCase().includes(searchLower) ||
       intervention.status.label.toLowerCase().includes(searchLower)
     );
   });
@@ -91,6 +93,13 @@ export class InterventionListComponent implements OnInit {
 
     this.interventionService.list(query).subscribe({
       next: (result: InterventionListResult) => {
+        console.log('=== Résultat de listInterventions ===');
+        console.log('Nombre d\'items:', result.items.length);
+        if (result.items.length > 0) {
+          console.log('Premier item complet:', result.items[0]);
+          console.log('ClientNom du premier item:', result.items[0].clientNom);
+          console.log('ClientId du premier item:', result.items[0].clientId);
+        }
         this.interventions.set(result.items);
         this.totalItems.set(result.total);
         this.loading.set(false);

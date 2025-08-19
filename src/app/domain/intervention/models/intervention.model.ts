@@ -104,7 +104,9 @@ export interface InterventionResponse {
 export interface InterventionListItem {
   id: string;
   clientId: string;
+  clientNom?: string;
   serviceId: string;
+  serviceNom?: string;
   status: { status: string; label: string };
   dateIntervention: Date;
   descriptionDemande: string;
