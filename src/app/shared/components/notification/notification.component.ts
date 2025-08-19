@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 
-// Types pour les classes
 type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 interface TypeClasses {

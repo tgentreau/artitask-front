@@ -1,7 +1,7 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, of } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   LoginRequest,
@@ -49,7 +49,6 @@ export class AuthService {
     ).pipe(
       tap(response => {
         this.loadingSignal.set(false);
-        console.log('Inscription réussie:', response.data.artisanId);
       }),
       catchError(error => {
         this.loadingSignal.set(false);
@@ -71,15 +70,13 @@ export class AuthService {
       credentials
     ).pipe(
       tap(response => {
-        // Stocker les tokens
         this.storeTokens(response.data.accessToken, response.data.refreshToken);
 
-        // Transformer et stocker l'utilisateur
         const user: User = {
           id: response.data.artisan.id,
           email: response.data.artisan.email,
           nomEntreprise: response.data.artisan.nomEntreprise,
-          telephone: '', // Sera complété par getProfile
+          telephone: '',
           adresse: '',
           compteActif: true
         };
@@ -87,7 +84,6 @@ export class AuthService {
         this.setCurrentUser(user);
         this.loadingSignal.set(false);
 
-        // Charger le profil complet après login
         this.getProfile().subscribe();
       }),
       catchError(error => {
@@ -120,7 +116,6 @@ export class AuthService {
         this.setCurrentUser(user);
       }),
       catchError(error => {
-        // Si erreur 401, le token est invalide
         if (error.status === 401) {
           this.logout();
         }
@@ -176,14 +171,12 @@ export class AuthService {
       tap(response => {
         console.log('Inscription réussie, connexion automatique...', response.data.artisanId);
 
-        // Après inscription, login automatique
         setTimeout(() => {
           this.login({
             email: data.email,
             password: data.password
           }).subscribe({
             next: () => {
-              console.log('Connexion automatique réussie');
               this.router.navigate(['/dashboard']);
             },
             error: (error) => {

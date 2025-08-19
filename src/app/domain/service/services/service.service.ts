@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   Service,
@@ -124,7 +124,6 @@ export class ServiceService {
   createService(data: CreateServiceRequest): Observable<ApiResponse<{ serviceId: string }>> {
     this.loadingSignal.set(true);
 
-    // Validation côté client
     if (!this.validateServiceData(data)) {
       return throwError(() => new Error('Données invalides'));
     }
@@ -136,7 +135,6 @@ export class ServiceService {
           'Service créé',
           `Le service "${data.nom}" a été créé avec succès`
         );
-        // Rafraîchir la liste
         this.refreshServices();
       }),
       catchError(error => this.handleError(error))
@@ -156,9 +154,7 @@ export class ServiceService {
           'Service modifié',
           'Les modifications ont été enregistrées'
         );
-        // Mettre à jour localement
         this.updateLocalService(id, data);
-        // Rafraîchir depuis le serveur pour être sûr
         this.getService(id).subscribe();
       }),
       catchError(error => this.handleError(error))
@@ -275,7 +271,6 @@ export class ServiceService {
     this.servicesSignal.update(services =>
       services.map(service => {
         if (service.id === id) {
-          // Mise à jour partielle en préservant la structure complète
           const updatedService: Service = {
             ...service,
             nom: updates.nom ?? service.nom,
@@ -315,7 +310,6 @@ export class ServiceService {
       })
     );
 
-    // Mettre à jour aussi le service courant si c'est lui
     const currentService = this.currentServiceSignal();
     if (currentService && currentService.id === id) {
       this.currentServiceSignal.set({ ...currentService, actif });
@@ -326,7 +320,6 @@ export class ServiceService {
    * Valide les données d'un service
    */
   private validateServiceData(data: CreateServiceRequest): boolean {
-    // Vérifier qu'il y a soit un tarif horaire, soit un tarif fixe, mais pas les deux
     if (!data.tarifHoraire && !data.tarifFixe) {
       this.notificationService.error(
         'Tarif requis',
@@ -343,7 +336,6 @@ export class ServiceService {
       return false;
     }
 
-    // Vérifier les majorations
     if (data.majorationUrgence && (data.majorationUrgence < 1 || data.majorationUrgence > 3)) {
       this.notificationService.error(
         'Majoration invalide',

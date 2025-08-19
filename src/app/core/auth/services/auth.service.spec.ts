@@ -5,12 +5,12 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { environment } from '../../../../environments/environment';
 import {
-  ApiResponse,
   AuthResponse,
   ArtisanResponse,
   RegisterResponse,
   User
 } from '../models/auth.model';
+import {ApiResponse} from "../../../shared/models/api-error-response.interface";
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -47,7 +47,6 @@ describe('AuthService', () => {
     it('should login successfully and store tokens', (done) => {
       const credentials = { email: 'test@test.com', password: 'password' };
 
-      // Type EXACT selon AuthResponse dans auth.model.ts
       const mockResponse: ApiResponse<AuthResponse> = {
         statusCode: 200,
         message: 'Success',
@@ -58,7 +57,6 @@ describe('AuthService', () => {
             id: '123',
             email: 'test@test.com',
             nomEntreprise: 'Test Company'
-            // PAS de telephone, adresse, etc. dans AuthResponse.artisan !
           }
         }
       };
@@ -76,7 +74,6 @@ describe('AuthService', () => {
       expect(req.request.body).toEqual(credentials);
       req.flush(mockResponse);
 
-      // Le service fait un appel automatique à getProfile après login
       const profileResponse: ApiResponse<ArtisanResponse> = {
         statusCode: 200,
         message: 'Success',
@@ -117,7 +114,6 @@ describe('AuthService', () => {
     });
 
     it('should logout and clear data', () => {
-      // Créer un User valide selon l'interface
       const mockUser: User = {
         id: '123',
         email: 'test@test.com',
@@ -196,7 +192,6 @@ describe('AuthService', () => {
     it('should refresh token successfully', (done) => {
       localStorageSpy.getItem.and.returnValue('old-refresh-token');
 
-      // AuthResponse pour refresh (même structure que login)
       const mockResponse: ApiResponse<AuthResponse> = {
         statusCode: 200,
         message: 'Success',

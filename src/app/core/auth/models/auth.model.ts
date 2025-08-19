@@ -3,11 +3,11 @@
  */
 export interface RegisterRequest {
   email: string;
-  password: string;  // Min 8 chars, 1 min, 1 maj, 1 chiffre
+  password: string;
   nomEntreprise: string;
   telephone: string;
   adresse: string;
-  siret?: string;  // Optionnel, 14 chiffres
+  siret?: string;
 }
 
 /**
@@ -78,7 +78,7 @@ export interface User {
  * Token décodé JWT
  */
 export interface DecodedToken {
-  sub: string;  // artisanId
+  sub: string;
   email: string;
   iat: number;
   exp: number;

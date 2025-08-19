@@ -161,8 +161,6 @@ export class ServiceListComponent implements OnInit {
     this.router.navigate(['/services', service.id, 'estimate']);
   }
 
-  // Méthodes pour les événements du ServiceCardComponent (vue grille)
-  // Ces méthodes reçoivent EXACTEMENT ce que le composant enfant émet
   onCardEdit(service: Service): void {
     this.editService(service);
   }
@@ -191,7 +189,6 @@ export class ServiceListComponent implements OnInit {
     });
   }
 
-  // Méthodes utilitaires pour la vue
   toggleViewMode(): void {
     this.viewMode.update(mode => mode === 'grid' ? 'list' : 'grid');
   }
