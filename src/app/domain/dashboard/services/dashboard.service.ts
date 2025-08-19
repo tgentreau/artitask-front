@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   ArtisanProfileResponse,
@@ -43,7 +44,13 @@ export class DashboardService {
       `${this.apiUrl}/calendar/stats`,
       { params: httpParams }
     ).pipe(
-      map(response => response.data)
+      map(response => {
+        console.log('Stats API Response:', response);
+        console.log('Stats data:', response.data);
+        console.log('Raw totalRevenue:', response.data?.totalRevenue);
+        console.log('Raw averageCost:', response.data?.averageCost);
+        return response.data
+      })
     );
   }
 
@@ -180,12 +187,12 @@ export class DashboardService {
       upcomingInterventions: this.getInterventions({
         status: 'planned',
         limit: 5,
-        sortBy: 'dateIntervention',
+        sortBy: 'date_intervention',
         sortOrder: 'ASC'
       }),
       recentClients: this.getClients({
         limit: 5,
-        sortBy: 'updatedAt',
+        sortBy: 'created_at',
         sortOrder: 'DESC'
       }),
       topServices: this.getServices({

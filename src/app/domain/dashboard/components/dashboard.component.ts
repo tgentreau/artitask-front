@@ -50,6 +50,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
+          console.log('Stats reçues:', data.stats);
+          console.log('Total Revenue:', data.stats?.totalRevenue);
+          console.log('Average Cost:', data.stats?.averageCost);
+          console.log('Type of totalRevenue:', typeof data.stats?.totalRevenue);
+          console.log('Type of averageCost:', typeof data.stats?.averageCost);
+
           this.profile.set(data.profile);
           this.stats.set(data.stats);
           this.todayEvents.set(data.todayEvents);
@@ -78,6 +84,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(amount: number): string {
+    console.log('formatCurrency input:', amount);
+    console.log('formatCurrency type:', typeof amount);
+
+    if (isNaN(amount)) {
+      console.warn('Amount is NaN!');
+    }
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR'
