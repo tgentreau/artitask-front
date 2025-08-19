@@ -233,33 +233,6 @@
               }
             </div>
           </div>
-
-          <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-              <h2 class="text-lg font-medium text-gray-900">Services populaires</h2>
-            </div>
-            <div class="p-6">
-              @if (topServices().length > 0) {
-                <div class="space-y-3">
-                  @for (service of topServices(); track service.id) {
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                      <h3 class="text-sm font-medium text-gray-900">{{ service.nom }}</h3>
-                      <div class="mt-1 text-xs text-gray-600">
-                        @if (service.tarifHoraire) {
-                          <span class="font-semibold text-green-600">{{ formatCurrency(service.tarifHoraire) }}/h</span>
-                        }
-                        @if (service.tarifFixe) {
-                          <span class="ml-2 font-semibold text-green-600">{{ formatCurrency(service.tarifFixe) }} fixe</span>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="text-center text-gray-500 py-8">Aucun service configuré</p>
-              }
-            </div>
-          </div>
         </div>
       </div>
     }

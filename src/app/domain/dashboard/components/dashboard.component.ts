@@ -28,7 +28,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   todayEvents = signal<CalendarEventResponse[]>([]);
   upcomingInterventions = signal<InterventionListItem[]>([]);
   recentClients = signal<ClientListItem[]>([]);
-  topServices = signal<ServiceListItem[]>([]);
 
   ngOnInit() {
     this.loadData();
@@ -50,18 +49,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          console.log('Stats reçues:', data.stats);
-          console.log('Total Revenue:', data.stats?.totalRevenue);
-          console.log('Average Cost:', data.stats?.averageCost);
-          console.log('Type of totalRevenue:', typeof data.stats?.totalRevenue);
-          console.log('Type of averageCost:', typeof data.stats?.averageCost);
-
           this.profile.set(data.profile);
           this.stats.set(data.stats);
           this.todayEvents.set(data.todayEvents);
           this.upcomingInterventions.set(data.upcomingInterventions.items);
           this.recentClients.set(data.recentClients.items);
-          this.topServices.set(data.topServices);
           this.loading.set(false);
         },
         error: (error) => {

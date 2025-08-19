@@ -163,24 +163,6 @@ export class DashboardService {
     );
   }
 
-  getServices(params?: ListQueryParams): Observable<ServiceListItem[]> {
-    let httpParams = new HttpParams();
-
-    if (params?.page) {
-      httpParams = httpParams.set('page', params.page.toString());
-    }
-    if (params?.limit) {
-      httpParams = httpParams.set('limit', params.limit.toString());
-    }
-
-    return this.http.get<ApiResponse<ServiceListItem[]>>(
-      `${this.apiUrl}/services`,
-      { params: httpParams }
-    ).pipe(
-      map(response => response.data)
-    );
-  }
-
   loadDashboardData() {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -210,9 +192,6 @@ export class DashboardService {
         sortBy: 'created_at',
         sortOrder: 'DESC'
       }),
-      topServices: this.getServices({
-        limit: 5
-      })
     });
   }
 }
