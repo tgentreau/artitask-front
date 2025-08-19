@@ -1,0 +1,267 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <p class="mt-1 text-sm text-gray-600">
+            Bienvenue, {{ profile()?.nomEntreprise || 'Chargement...' }}
+          </p>
+        </div>
+        <div class="flex gap-4">
+          <button
+            (click)="refresh()"
+            [disabled]="loading()"
+            class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2"
+          >
+            <svg [class.animate-spin]="loading()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Actualiser
+          </button>
+          <button
+            routerLink="/interventions/new"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            + Nouvelle intervention
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (loading() && !stats()) {
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">Total interventions</dt>
+                  <dd class="text-lg font-medium text-gray-900">{{ stats()?.total || 0 }}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">Terminées</dt>
+                  <dd class="text-lg font-medium text-gray-900">{{ stats()?.completed || 0 }}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">En cours</dt>
+                  <dd class="text-lg font-medium text-gray-900">{{ stats()?.inProgress || 0 }}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">Planifiées</dt>
+                  <dd class="text-lg font-medium text-gray-900">{{ stats()?.planned || 0 }}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Performance</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-gray-600">Taux de complétion</span>
+              <span class="text-sm font-semibold">{{ stats()?.completionRate || 0 }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" [style.width.%]="stats()?.completionRate || 0"></div>
+            </div>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">Chiffre d'affaires (mois)</span>
+            <p class="text-2xl font-bold text-green-600">{{ formatCurrency(stats()?.totalRevenue || 0) }}</p>
+          </div>
+          <div>
+            <span class="text-sm text-gray-600">Coût moyen</span>
+            <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats()?.averageCost || 0) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Interventions du jour</h2>
+            </div>
+            <div class="p-6">
+              @if (todayEvents().length > 0) {
+                <div class="space-y-4">
+                  @for (event of todayEvents(); track event.id) {
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" (click)="viewIntervention(event.id)">
+                      <div class="flex-1">
+                        <h3 class="text-sm font-medium text-gray-900">{{ event.title }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ event.location || 'Adresse non définie' }}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                              <span [class]="getStatusClass(event.status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                {{ event.status }}
+                              </span>
+                          @if (event.isUrgent) {
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  Urgent
+                                </span>
+                          }
+                        </div>
+                      </div>
+                      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-center text-gray-500 py-8">Aucune intervention prévue aujourd'hui</p>
+              }
+            </div>
+          </div>
+
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Prochaines interventions</h2>
+            </div>
+            <div class="p-6">
+              @if (upcomingInterventions().length > 0) {
+                <div class="space-y-4">
+                  @for (intervention of upcomingInterventions(); track intervention.id) {
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" (click)="viewIntervention(intervention.id)">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                          <p class="text-sm text-gray-500">{{ formatDate(intervention.dateIntervention) }}</p>
+                          <h3 class="text-sm font-medium text-gray-900 mt-1">{{ intervention.descriptionDemande }}</h3>
+                          @if (intervention.coutEstime) {
+                            <p class="text-sm font-semibold text-green-600 mt-2">
+                              {{ formatCurrency(intervention.coutEstime.amount) }}
+                            </p>
+                          }
+                        </div>
+                        <span [class]="getPriorityClass(intervention.priority.priority)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                              {{ intervention.priority.label }}
+                            </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-center text-gray-500 py-8">Aucune intervention planifiée</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-8">
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Clients récents</h2>
+            </div>
+            <div class="p-6">
+              @if (recentClients().length > 0) {
+                <div class="space-y-3">
+                  @for (client of recentClients(); track client.id) {
+                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" (click)="viewClient(client.id)">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span class="text-sm font-medium text-gray-600">{{ getInitials(client.nom) }}</span>
+                        </div>
+                        <div class="ml-3">
+                          <p class="text-sm font-medium text-gray-900">{{ client.nom }}</p>
+                          <p class="text-xs text-gray-500">{{ client.telephone }}</p>
+                        </div>
+                      </div>
+                      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-center text-gray-500 py-8">Aucun client récent</p>
+              }
+            </div>
+          </div>
+
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-medium text-gray-900">Services populaires</h2>
+            </div>
+            <div class="p-6">
+              @if (topServices().length > 0) {
+                <div class="space-y-3">
+                  @for (service of topServices(); track service.id) {
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <h3 class="text-sm font-medium text-gray-900">{{ service.nom }}</h3>
+                      <div class="mt-1 text-xs text-gray-600">
+                        @if (service.tarifHoraire) {
+                          <span class="font-semibold text-green-600">{{ formatCurrency(service.tarifHoraire) }}/h</span>
+                        }
+                        @if (service.tarifFixe) {
+                          <span class="ml-2 font-semibold text-green-600">{{ formatCurrency(service.tarifFixe) }} fixe</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-center text-gray-500 py-8">Aucun service configuré</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
