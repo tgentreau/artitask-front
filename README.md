@@ -1,93 +1,379 @@
-# ArtiTask-front
+# ArtiTask Frontend
 
+Interface web de gestion d'interventions pour artisans
 
+## 🚀 Stack Technique
 
-## Getting started
+- **Framework**: Angular 17
+- **Architecture**: Standalone Components + Signals
+- **Styling**: Tailwind CSS
+- **State Management**: Angular Signals
+- **HTTP Client**: Angular HttpClient avec intercepteurs
+- **Routing**: Angular Router avec lazy loading
+- **Formulaires**: Reactive Forms
+- **Documentation**: Compodoc
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 📋 Prérequis
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Node.js v18.x ou supérieur
+- NPM v9.x ou supérieur
+- Angular CLI v17.x
 
-## Add your files
+## 🔧 Installation
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### 1. Cloner le repository
+
+```bash
+git clone https://gitlab.com/tgentreau/artitask-front.git
+cd artitask-front
+```
+
+### 2. Installer les dépendances
+
+```bash
+npm install
+```
+
+### 3. Configuration de l'environnement
+
+Éditer le fichier `src/environments/environment.ts` :
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000',
+  appName: 'ArtiTask',
+  appVersion: '1.0.0'
+};
+```
+
+Pour la production, éditer `src/environments/environment.prod.ts` :
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.artitask.fr',
+  appName: 'ArtiTask',
+  appVersion: '1.0.0'
+};
+```
+
+## 🚀 Démarrage
+
+### Développement
+
+```bash
+ng serve
+```
+
+L'application sera accessible sur `http://localhost:4200`
+
+### Build de production
+
+```bash
+ng build --configuration production
+```
+
+Les fichiers de production seront dans le dossier `dist/`
+
+### Avec Docker
+
+```bash
+docker build -t artitask-frontend .
+docker run -p 80:80 artitask-frontend
+```
+
+## 📁 Architecture du Projet
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/tgentreau/artitask-front.git
-git branch -M main
-git push -uf origin main
+src/
+├── app/
+│   ├── core/                      # Services singleton et configuration
+│   │   ├── auth/                 # Authentification
+│   │   │   ├── services/         # AuthService
+│   │   │   ├── guards/           # AuthGuard
+│   │   │   ├── interceptors/     # JWT Interceptor
+│   │   │   ├── models/           # Interfaces
+│   │   │   └── components/       # Login, Register
+│   │   │
+│   │   ├── layout/              # Layout principal
+│   │   │   ├── header/
+│   │   │   ├── sidebar/
+│   │   │   └── footer/
+│   │   │
+│   │   └── services/            # Services globaux
+│   │       ├── api.service.ts
+│   │       ├── notification.service.ts
+│   │       └── error-handler.service.ts
+│   │
+│   ├── domain/                   # Modules métier
+│   │   ├── dashboard/           # Tableau de bord
+│   │   │   ├── components/
+│   │   │   ├── services/
+│   │   │   └── models/
+│   │   │
+│   │   ├── intervention/        # Gestion interventions
+│   │   │   ├── components/
+│   │   │   │   ├── list/
+│   │   │   │   ├── detail/
+│   │   │   │   ├── create/
+│   │   │   │   └── edit/
+│   │   │   ├── services/
+│   │   │   └── models/
+│   │   │
+│   │   ├── client/             # Gestion clients
+│   │   │   └── [même structure]
+│   │   │
+│   │   └── service/            # Catalogue services
+│   │       └── [même structure]
+│   │
+│   ├── shared/                 # Éléments réutilisables
+│   │   ├── components/        # Composants UI
+│   │   │   ├── button/
+│   │   │   ├── card/
+│   │   │   ├── modal/
+│   │   │   ├── table/
+│   │   │   └── form/
+│   │   ├── directives/        # Directives personnalisées
+│   │   ├── pipes/             # Pipes personnalisés
+│   │   ├── models/            # Interfaces partagées
+│   │   └── utils/             # Fonctions utilitaires
+│   │
+│   ├── app.component.ts       # Composant racine
+│   ├── app.config.ts          # Configuration de l'app
+│   └── app.routes.ts          # Configuration du routing
+│
+├── assets/                     # Images, fonts, etc.
+├── environments/              # Configuration par environnement
+└── styles.css                 # Styles globaux avec Tailwind
 ```
 
-## Integrate with your tools
+## 🎨 Composants Principaux
 
-- [ ] [Set up project integrations](https://gitlab.com/tgentreau/artitask-front/-/settings/integrations)
+### Authentification
 
-## Collaborate with your team
+- **LoginComponent** : Formulaire de connexion
+- **RegisterComponent** : Inscription nouvel artisan
+- **ProfileComponent** : Gestion du profil utilisateur
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### Dashboard
 
-## Test and Deploy
+- **DashboardComponent** : Vue d'ensemble avec statistiques
+- **StatsCardComponent** : Cartes de statistiques
+- **InterventionChartComponent** : Graphiques d'interventions
 
-Use the built-in continuous integration in GitLab.
+### Interventions
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- **InterventionListComponent** : Liste paginée des interventions
+- **InterventionDetailComponent** : Détails complets d'une intervention
+- **InterventionFormComponent** : Création/modification d'intervention
+- **InterventionStatusComponent** : Gestion du statut
 
-***
+### Clients
 
-# Editing this README
+- **ClientListComponent** : Liste avec recherche et filtres
+- **ClientDetailComponent** : Fiche client complète
+- **ClientFormComponent** : Formulaire client
+- **ClientHistoryComponent** : Historique des interventions
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Services
 
-## Suggestions for a good README
+- **ServiceListComponent** : Catalogue des services
+- **ServiceFormComponent** : Création/modification de service
+- **ServicePricingComponent** : Configuration tarification
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## 🧪 Tests
 
-## Name
-Choose a self-explaining name for your project.
+### Tests unitaires
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+ng test
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### Tests E2E
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```bash
+ng e2e
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### Tests avec couverture
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+ng test --code-coverage
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## 🔌 Services Angular
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### AuthService
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```typescript
+login(credentials: LoginRequest): Observable<LoginResponse>
+logout(): void
+refreshToken(): Observable<TokenResponse>
+isAuthenticated(): boolean
+getCurrentUser(): ArtisanProfile | null
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### InterventionService
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```typescript
+getAll(params?: QueryParams): Observable<Intervention[]>
+getById(id: string): Observable<Intervention>
+create(data: CreateInterventionRequest): Observable<{id: string}>
+update(id: string, data: UpdateInterventionRequest): Observable<void>
+updateStatus(id: string, status: InterventionStatus): Observable<void>
+delete(id: string): Observable<void>
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### ClientService
 
-## License
-For open source projects, say how it is licensed.
+```typescript
+getAll(params?: QueryParams): Observable<Client[]>
+getById(id: string): Observable<Client>
+create(data: CreateClientRequest): Observable<{id: string}>
+update(id: string, data: UpdateClientRequest): Observable<void>
+delete(id: string): Observable<void>
+search(query: string): Observable<Client[]>
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 🛡️ Guards et Intercepteurs
+
+### AuthGuard
+
+Protège les routes nécessitant une authentification
+
+```typescript
+canActivate(): boolean {
+  if (this.authService.isAuthenticated()) {
+    return true;
+  }
+  this.router.navigate(['/login']);
+  return false;
+}
+```
+
+### JWT Interceptor
+
+Ajoute automatiquement le token JWT aux requêtes
+
+```typescript
+intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  const token = this.authService.getToken();
+  if (token) {
+    req = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+  return next.handle(req);
+}
+```
+
+## 📱 Responsive Design
+
+L'application est entièrement responsive avec Tailwind CSS :
+
+- **Mobile** : Navigation bottom bar, vues simplifiées
+- **Tablette** : Sidebar collapsible, grilles adaptatives
+- **Desktop** : Interface complète avec sidebar fixe
+
+## 🎯 Routing
+
+```typescript
+export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { 
+    path: 'login', 
+    loadComponent: () => import('./core/auth/components/login/login.component')
+  },
+  {
+    path: '',
+    component: LayoutComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { 
+        path: 'dashboard',
+        loadComponent: () => import('./domain/dashboard/dashboard.component')
+      },
+      {
+        path: 'interventions',
+        loadChildren: () => import('./domain/intervention/intervention.routes')
+      },
+      {
+        path: 'clients',
+        loadChildren: () => import('./domain/client/client.routes')
+      },
+      {
+        path: 'services',
+        loadChildren: () => import('./domain/service/service.routes')
+      }
+    ]
+  },
+  { path: '**', redirectTo: 'dashboard' }
+];
+```
+
+## 📦 Scripts NPM
+
+| Script | Description |
+|--------|-------------|
+| `ng serve` | Démarre le serveur de développement |
+| `ng build` | Build de production |
+| `ng test` | Lance les tests unitaires |
+| `ng e2e` | Lance les tests E2E |
+| `ng lint` | Vérifie le code avec ESLint |
+| `ng generate` | Génère des composants/services |
+
+## 🚀 Déploiement
+
+### Build de production
+
+```bash
+ng build --configuration production
+```
+
+## 🎨 Conventions de Code
+
+### Nommage
+
+- **Composants** : PascalCase avec suffixe `Component`
+- **Services** : PascalCase avec suffixe `Service`
+- **Interfaces** : PascalCase sans préfixe `I`
+- **Méthodes** : camelCase
+- **Constantes** : UPPER_SNAKE_CASE
+
+### Structure des composants
+
+```typescript
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './example.component.html',
+  styleUrl: './example.component.css'
+})
+export class ExampleComponent implements OnInit {
+  private readonly service = inject(ExampleService);
+  
+  ngOnInit(): void {
+    // Initialisation
+  }
+}
+```
+
+## 📊 Performance
+
+- **Lazy loading** : Chargement à la demande des modules
+- **OnPush strategy** : Optimisation de la détection de changements
+- **Signals** : Gestion d'état réactive et performante
+- **Tree shaking** : Suppression du code non utilisé
+- **Bundle optimization** : Minification et compression
+
+## 👥 Contributeurs
+
+- Équipe ArtiTask
+
+## 📄 Licence
+
+Propriétaire - ArtiTask © 2025
